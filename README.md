@@ -7,25 +7,18 @@ A comprehensive DevOps-focused Vim configuration with modern features, syntax hi
 ### 1. Prerequisites Installation
 
 ```bash
-# Ubuntu/Debian
 sudo apt update
 sudo apt install -y vim git curl nodejs npm python3 python3-pip
-
-# CentOS/RHEL/Fedora
-sudo dnf install -y vim git curl nodejs npm python3 python3-pip
-
-# Arch Linux
-sudo pacman -S vim git curl nodejs npm python3 python3-pip
 ```
 
 ### 2. Clone and Setup Configuration
 
 ```bash
 # Clone your dotfiles repository
-git clone <your-repo-url> ~/dotfiles
+git clone https://github.com/matanweisz/linux-configs.git
 
 # Copy .vimrc to home directory
-cp ~/dotfiles/.vimrc ~/.vimrc
+cp ~/linux-configs/.vimrc ~/.vimrc
 
 # Create necessary directories
 mkdir -p ~/.vim/undodir
@@ -42,10 +35,7 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 ### 4. Install Plugins
 
 ```bash
-# Open vim and install plugins
-vim +PlugInstall +qall
-
-# Alternative: Install plugins from command line
+# Install plugins from command line
 vim +'PlugInstall --sync' +qa
 ```
 
@@ -58,27 +48,6 @@ cd ~/.local/share/fonts
 curl -fLo "Droid Sans Mono for Powerline Nerd Font Complete.otf" \
     https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/DroidSansMono/complete/Droid%20Sans%20Mono%20Nerd%20Font%20Complete.otf
 fc-cache -fv
-```
-
-### 6. Setup CoC Extensions
-
-The CoC extensions will auto-install on first startup, but you can manually install them:
-
-```bash
-vim -c 'CocInstall coc-json coc-yaml coc-sh coc-docker coc-terraform coc-pyright coc-git coc-tsserver coc-prettier' -c 'qa'
-```
-
----
-
-## 📁 File Structure
-
-```
-~/.vim/
-├── autoload/
-│   └── plug.vim              # vim-plug plugin manager
-├── plugged/                  # Installed plugins directory
-├── undodir/                  # Persistent undo files
-└── .vimrc                    # Main configuration file
 ```
 
 ---
@@ -210,97 +179,6 @@ vim -c 'CocInstall coc-json coc-yaml coc-sh coc-docker coc-terraform coc-pyright
 
 ---
 
-## 🔧 Customization
-
-### Changing Theme
-
-```vim
-" In .vimrc, replace:
-colorscheme gruvbox
-" With your preferred theme, e.g.:
-colorscheme molokai
-```
-
-### Adding New Languages
-
-```vim
-" Add language support plugins in the plugin section:
-Plug 'rust-lang/rust.vim'          " Rust support
-Plug 'fatih/vim-go'                " Go support
-Plug 'pangloss/vim-javascript'     " Better JavaScript
-```
-
-### Custom Key Mappings
-
-```vim
-" Add custom mappings to .vimrc:
-nnoremap <leader>w :w<CR>          " Save with leader+w
-nnoremap <leader>q :q<CR>          " Quit with leader+q
-" Leader key is backslash (\) by default
-```
-
----
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-#### Plugins Not Working
-
-```bash
-# Reinstall plugins
-vim +PlugClean +PlugInstall +qall
-```
-
-#### CoC Not Working
-
-```bash
-# Check Node.js version (needs 14+)
-node --version
-
-# Rebuild CoC
-vim -c 'CocRebuild' -c 'qa'
-```
-
-#### Icons Not Showing
-
-- Install a Nerd Font and configure your terminal
-- Ensure terminal supports UTF-8 encoding
-
-#### Slow Performance
-
-```vim
-" Add to .vimrc for better performance:
-set lazyredraw                    " Don't redraw during macros
-set ttyfast                       " Faster terminal connection
-```
-
-### Checking Plugin Status
-
-```vim
-:PlugStatus                       " Check plugin installation status
-:CocInfo                          " Show CoC information
-:checkhealth                      " Check Vim health (Neovim only)
-```
-
----
-
-## 📚 Learning Resources
-
-### Vim Basics
-
-- `:help` - Built-in help system
-- `:Tutor` - Interactive Vim tutorial
-- [Vim Adventures](https://vim-adventures.com/) - Gamified learning
-
-### Advanced Usage
-
-- `:help user-manual` - Complete user manual
-- [Practical Vim](https://pragprog.com/titles/dnvim2/practical-vim-second-edition/) - Excellent book
-- [Vim Casts](http://vimcasts.org/) - Video tutorials
-
----
-
 ## 🔄 Maintenance
 
 ### Updating Plugins
@@ -308,58 +186,13 @@ set ttyfast                       " Faster terminal connection
 ```bash
 # Update all plugins
 vim +PlugUpdate +qall
-
-# Update specific plugin
-vim +PlugUpdate nerdtree +qall
 ```
 
-### Backup Configuration
+### Cleaning Unused Plugins
 
 ```bash
-# Backup your .vimrc
-cp ~/.vimrc ~/.vimrc.backup.$(date +%Y%m%d)
-
-# Commit changes to git
-cd ~/dotfiles
-git add .vimrc
-git commit -m "Update vim configuration"
-git push
+# Remove unused plugins
+vim +PlugClean +qall
 ```
 
 ---
-
-## 🚀 Performance Tips
-
-1. **Disable unnecessary features** for large files:
-
-   ```vim
-   autocmd BufReadPre * if getfsize(@%) > 1000000 | syntax off | endif
-   ```
-
-2. **Use minimal config** for quick edits:
-
-   ```bash
-   vim -u NONE filename    # Start with no configuration
-   ```
-
-3. **Profile startup time**:
-   ```bash
-   vim --startuptime startup.log
-   ```
-
----
-
-## 🤝 Contributing
-
-Feel free to customize this configuration for your needs. Common additions:
-
-- Language-specific plugins
-- Custom color schemes
-- Additional key mappings
-- Workflow-specific shortcuts
-
-Remember to test changes in a separate branch and backup your working configuration before major modifications.
-
----
-
-_Happy Vimming! 🎉_
