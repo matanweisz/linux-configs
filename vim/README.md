@@ -19,10 +19,6 @@ git clone https://github.com/matanweisz/linux-configs.git
 
 # Copy .vimrc to home directory
 cp ~/linux-configs/.vimrc ~/.vimrc
-
-# Create necessary directories
-mkdir -p ~/.vim/undodir
-mkdir -p ~/.vim/plugged
 ```
 
 ### 3. Install vim-plug Plugin Manager
@@ -30,6 +26,10 @@ mkdir -p ~/.vim/plugged
 ```bash
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+# Create necessary directories
+mkdir -p ~/.vim/undodir
+mkdir -p ~/.vim/plugged
 ```
 
 ### 4. Install Plugins
