@@ -112,29 +112,40 @@ ec2ssh() {
         return 1
     fi
 
-    # Get the Key Pair Name associated with the instance
-    KEY_NAME=$(aws ec2 describe-instances --instance-ids $1 --query "Reservations[0].Instances[0].KeyName" --output text)
+    INSTANCE_ID=$1
 
-    # Construct the SSH key path
-    KEY_PATH=~/ssh_keys/$KEY_NAME.pem
+    # Get Key Pair Name & path
+    KEY_NAME=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query "Reservations[0].Instances[0].KeyName" --output text)
+    KEY_PATH=~/ssh_keys/"$KEY_NAME".pem
 
-    # Get the public IP of the instance
-    PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $1 --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+    # Get both IPs up front
+    PUBLIC_IP=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+    PRIVATE_IP=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query "Reservations[0].Instances[0].PrivateIpAddress" --output text)
 
-    # Detect the instance OS by checking the AMI Name
-    AMI_NAME=$(aws ec2 describe-instances --instance-ids $1 --query "Reservations[0].Instances[0].ImageId" --output text)
-    OS_NAME=$(aws ec2 describe-images --image-ids $AMI_NAME --query "Images[0].Name" --output text)
-
-    # Determine the default SSH user based on the AMI name
+    # Determine SSH user
+    AMI_ID=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query "Reservations[0].Instances[0].ImageId" --output text)
+    OS_NAME=$(aws ec2 describe-images --image-ids "$AMI_ID" --query "Images[0].Name" --output text)
     if [[ "$OS_NAME" == *"ubuntu"* ]]; then
         SSH_USER="ubuntu"
     else
-        SSH_USER="ec2-user" # Default to Amazon Linux
+        SSH_USER="ec2-user"
     fi
 
-    # Connect to the EC2 instance via SSH
-    echo "Connecting to $PUBLIC_IP using key $KEY_PATH..."
-    ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no "$SSH_USER"@"$PUBLIC_IP"
+    # Decide which IP to use
+    if [ "$PUBLIC_IP" != "None" ] && [ -n "$PUBLIC_IP" ]; then
+        TARGET_IP=$PUBLIC_IP
+        echo "Using Public IP: $TARGET_IP"
+    elif [ "$PRIVATE_IP" != "None" ] && [ -n "$PRIVATE_IP" ]; then
+        TARGET_IP=$PRIVATE_IP
+        echo "No Public IP found. Using Private IP: $TARGET_IP"
+    else
+        echo "ERROR: No reachable IP found for instance $INSTANCE_ID."
+        return 1
+    fi
+
+    # Connect
+    echo "Connecting to $TARGET_IP as user $SSH_USER using the key $KEY_PATH..."
+    ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no "$SSH_USER@$TARGET_IP"
 }
 
 # Shell function that automatically scp files to an AWS EC2 instance
