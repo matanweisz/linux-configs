@@ -1,0 +1,160 @@
+# Clean, Professional Starship Prompt for DevOps (Catppuccin Theme)
+
+format = """
+$time\
+$username$directory\
+$line_break\
+$git_branch$git_commit$git_state$git_metrics$git_status\
+$aws$gcloud$kubernetes$docker_context$terraform\
+$package$nodejs$python$golang$rust$java$php$dotnet\
+$cmd_duration$jobs$status\
+$line_break$character
+"""
+
+add_newline = true
+right_format = ""
+
+# ─── TOP INFO ───────────────────────────────────────────────
+
+[time]
+format = "╭─ 🕐[$time]($style)"
+time_format = "%H:%M"
+style = "bold #89b4fa"
+disabled = false
+
+# ─── USER & DIRECTORY ──────────────────────────────────────
+
+[username]
+format = " [$user]($style)"
+style_user = "bold #cdd6f4"
+style_root = "bold #f38ba8"
+show_always = true
+
+[directory]
+format = " [➤](bold #89b4fa)  [$path]($style)[$read_only]($read_only_style)"
+style = "bold #89dceb"
+read_only = " 🔒"
+read_only_style = "bold #f38ba8"
+truncation_length = 4
+truncate_to_repo = true
+home_symbol = "~"
+
+# ─── GIT ───────────────────────────────────────────────────
+
+[git_branch]
+format = " [$symbol$branch]($style)"
+symbol = " "
+style = "bold #a6e3a1"
+truncation_length = 25
+truncation_symbol = "…"
+
+[git_commit]
+style = "bold #fab387"
+format = " [Hash-]($style)[$hash]($style)"
+commit_hash_length = 7
+tag_symbol = "🏷"
+only_detached = false
+
+[git_state]
+format = " [$state($progress_current/$progress_total)]($style)"
+style = "bold #f9e2af"
+
+[git_metrics]
+format = " [+${added}]($added_style) [-${deleted}]($deleted_style)"
+added_style = "bold #a6e3a1"
+deleted_style = "bold #f38ba8"
+
+[git_status]
+format = ' [${modified}${staged}${deleted}${renamed}${conflicted}${untracked}${stashed}]($style) [${up_to_date}${ahead_behind}]($style)'
+style = 'bold #f38ba8'
+
+conflicted = ' ⚡${count}'
+ahead = '↑${count}'
+behind = '↓${count}'
+diverged = '⇕↑${ahead_count} ↓${behind_count}'
+untracked = ' ?${count}'
+stashed = ' ≡${count}'
+modified = ' !${count}'
+staged = ' +${count}'
+renamed = ' »${count}'
+deleted = ' ✖${count}'
+up_to_date = '✓'
+
+# ─── CLOUD / DEVOPS TOOLS ──────────────────────────────────
+
+[aws]
+format = "  ☁️ [AWS: $profile]($style)"
+style = "bold #fab387"
+disabled = false
+
+[kubernetes]
+format = "  ⎈ [K8s: $context]($style)"
+style = "bold #cba6f7"
+disabled = false
+
+[docker_context]
+format = "  🐳 [Docker: $context]($style)"
+style = "bold #89dceb"
+disabled = false
+
+[terraform]
+format = "  💠 [TF: $workspace]($style)"
+style = "bold #cba6f7"
+disabled = false
+
+# ─── LANGUAGES / ENVIRONMENTS ──────────────────────────────
+
+[package]
+format = " [📦 $version]($style)"
+style = "bold #f9e2af"
+
+[nodejs]
+format = " [Node $version]($style)"
+style = "bold #a6e3a1"
+
+[python]
+format = " [Py $version]($style) [$virtualenv]($virtualenv_style)"
+style = "bold #f9e2af"
+
+[golang]
+format = " [Go $version]($style)"
+style = "bold #74c7ec"
+
+[rust]
+format = " [Rust $version]($style)"
+style = "bold #fab387"
+
+[java]
+format = " [Java $version]($style)"
+style = "bold #f38ba8"
+
+[php]
+format = " [PHP $version]($style)"
+style = "bold #cba6f7"
+
+[dotnet]
+format = " [.NET $version]($style)"
+style = "bold #74c7ec"
+
+# ─── SHELL STATUS ──────────────────────────────────────────
+
+[cmd_duration]
+format = " [⏱ $duration]($style)"
+style = "bold #f9e2af"
+min_time = 1000
+
+[jobs]
+format = " [✦ $number]($style)"
+style = "bold #cba6f7"
+
+[status]
+format = " [✖ $status]($style)"
+style = "bold #f38ba8"
+success_symbol = ""
+
+# ─── FINAL CHARACTER ───────────────────────────────────────
+
+[character]
+success_symbol = "[╰─](bold #cdd6f4)[❯](bold #a6e3a1)"
+error_symbol = "[╰─](bold #cdd6f4)[❯](bold #f38ba8)"
+vimcmd_symbol = "[╰─❮](bold #cba6f7)"

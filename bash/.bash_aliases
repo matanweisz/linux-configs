@@ -7,7 +7,7 @@ parse_git_branch() {
 }
 
 # My Custom PS1
-export PS1='\[\e[38;5;108m\][\A] \[\e[38;5;110m\]~\u\[\e[38;5;110m\]\w \[\e[38;5;205m\]$(parse_git_branch)\[\e[38;5;205m\]➜\[\e[0m\] '
+#export PS1='\[\e[38;5;108m\][\A] \[\e[38;5;110m\]~\u\[\e[38;5;110m\]\w \[\e[38;5;205m\]$(parse_git_branch)\[\e[38;5;205m\]➜\[\e[0m\] '
 
 # Linux
 alias ll='ls -lah --color=auto'
