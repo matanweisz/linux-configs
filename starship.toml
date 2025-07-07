@@ -43,14 +43,14 @@ home_symbol = "~"
 
 [git_branch]
 format = " [$symbol$branch]($style)"
-symbol = " "
+symbol = "  "
 style = "bold #a6e3a1"
 truncation_length = 25
 truncation_symbol = "…"
 
 [git_commit]
 style = "bold #fab387"
-format = " [Hash-]($style)[$hash]($style)"
+format = "  [$hash]($style)"
 commit_hash_length = 7
 tag_symbol = "🏷"
 only_detached = false
@@ -139,7 +139,7 @@ style = "bold #74c7ec"
 # ─── SHELL STATUS ──────────────────────────────────────────
 
 [cmd_duration]
-format = " [⏱ $duration]($style)"
+format = "  [⏱ $duration]($style)"
 style = "bold #f9e2af"
 min_time = 1000
 
