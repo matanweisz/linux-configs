@@ -1,10 +1,24 @@
 # My full custom configuration for bash and the Linux terminal
 
+# Git branch (if inside repo) for PS1
+parse_git_branch() {
+    git rev-parse --is-inside-work-tree &>/dev/null || return
+    git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD
+}
+
 # My Custom PS1
-export PS1='\[$(tput setaf 71)\][\A]\[$(tput setaf 45)\]~\[$(tput setaf 227)\]\u\[$(tput setaf 45)\]\w\[$(tput setaf 15)\] ➜ 💲 '
+export PS1='\[\e[38;5;108m\][\A] \[\e[38;5;110m\]~\u\[\e[38;5;110m\]\w \[\e[38;5;205m\]$(parse_git_branch)\[\e[38;5;205m\]➜\[\e[0m\] '
 
 # Linux
+alias ll='ls -lah --color=auto'
 alias dc='cd ..'
+
+alias vim='nvim'
+alias cat='bat --paging=never --style=plain'
+
+alias z='zellij --session temp-$(basename "$PWD") --layout compact && zellij kill-session temp-$(basename "$PWD")'
+
+alias ff='fzf --preview "bat --style=numbers --color=always {}" --layout=reverse --border | xargs -r nvim'
 
 safe-rm() {
     for file in "$@"; do
@@ -61,6 +75,9 @@ alias gs='git status'
 alias gp='git push'
 alias gc='git commit -m'
 alias ga='git add'
+alias gpu='git pull'
+alias gsw='git switch'
+alias gcl='git clone'
 
 # Terraform
 alias t='terraform'
