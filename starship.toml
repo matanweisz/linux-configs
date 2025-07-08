@@ -17,7 +17,7 @@ right_format = ""
 # ─── TOP INFO ───────────────────────────────────────────────
 
 [time]
-format = "╭─❮ 🕐[$time]($style)"
+format = "╭─🕐[$time]($style)"
 time_format = "%H:%M"
 style = "bold #89b4fa"
 disabled = false
@@ -43,7 +43,7 @@ home_symbol = "~"
 
 [git_branch]
 format = " [$symbol$branch]($style)[→]($style)"
-symbol = "   "
+symbol = " "
 style = "bold #a6e3a1"
 truncation_length = 25
 truncation_symbol = "…"
@@ -81,7 +81,7 @@ deleted = ' ✖${count}'
 up_to_date = '✓'
 
 [kubernetes]
-format = "   ⎈ [kubeconfig: $context]($style)"
+format = " ⎈ [kubeconfig: $context]($style)"
 style = "bold #cba6f7"
 disabled = false
 
