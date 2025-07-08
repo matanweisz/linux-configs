@@ -4,8 +4,8 @@ format = """
 $time\
 $username$directory\
 $line_break\
-$git_branch$git_commit$git_state$git_metrics$git_status\
-$aws$gcloud$kubernetes$docker_context$terraform\
+│$git_branch$git_commit$git_state$git_metrics$git_status\
+$kubernetes\
 $package$nodejs$python$golang$rust$java$php$dotnet\
 $cmd_duration$jobs$status\
 $line_break$character
@@ -17,7 +17,7 @@ right_format = ""
 # ─── TOP INFO ───────────────────────────────────────────────
 
 [time]
-format = "╭─ 🕐[$time]($style)"
+format = "╭─❮ 🕐[$time]($style)"
 time_format = "%H:%M"
 style = "bold #89b4fa"
 disabled = false
@@ -42,15 +42,15 @@ home_symbol = "~"
 # ─── GIT ───────────────────────────────────────────────────
 
 [git_branch]
-format = " [$symbol$branch]($style)"
-symbol = "  "
+format = " [$symbol$branch]($style)[→]($style)"
+symbol = "   "
 style = "bold #a6e3a1"
 truncation_length = 25
 truncation_symbol = "…"
 
 [git_commit]
 style = "bold #fab387"
-format = "  [$hash]($style)"
+format = " [$hash]($style)"
 commit_hash_length = 7
 tag_symbol = "🏷"
 only_detached = false
@@ -80,25 +80,8 @@ renamed = ' »${count}'
 deleted = ' ✖${count}'
 up_to_date = '✓'
 
-# ─── CLOUD / DEVOPS TOOLS ──────────────────────────────────
-
-[aws]
-format = "  ☁️ [AWS: $profile]($style)"
-style = "bold #fab387"
-disabled = false
-
 [kubernetes]
-format = "  ⎈ [K8s: $context]($style)"
-style = "bold #cba6f7"
-disabled = false
-
-[docker_context]
-format = "  🐳 [Docker: $context]($style)"
-style = "bold #89dceb"
-disabled = false
-
-[terraform]
-format = "  💠 [TF: $workspace]($style)"
+format = "   ⎈ [kubeconfig: $context]($style)"
 style = "bold #cba6f7"
 disabled = false
 
