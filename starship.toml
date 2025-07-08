@@ -42,7 +42,7 @@ home_symbol = "~"
 # ─── GIT ───────────────────────────────────────────────────
 
 [git_branch]
-format = " [$symbol$branch]($style) ➤ "
+format = " [$symbol$branch]($style) "
 symbol = " "
 style = "bold #a6e3a1"
 truncation_length = 25
@@ -65,7 +65,7 @@ added_style = "bold #a6e3a1"
 deleted_style = "bold #f38ba8"
 
 [git_status]
-format = '[${modified}${staged}${deleted}${renamed}${conflicted}${untracked}${stashed}]($style)[${up_to_date}${ahead_behind}]($style)'
+format = ' [${modified}${staged}${deleted}${renamed}${conflicted}${untracked}${stashed}]($style) [${up_to_date}${ahead_behind}]($style)'
 style = 'bold #f38ba8'
 
 conflicted = ' ⚡${count}'
@@ -81,7 +81,7 @@ deleted = ' ✖${count}'
 up_to_date = '✓'
 
 [kubernetes]
-format = " [k8s: $context]($style)"
+format = "  [k8s: $context]($style)"
 style = "bold #cba6f7"
 disabled = false
 
