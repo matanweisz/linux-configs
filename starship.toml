@@ -17,7 +17,7 @@ right_format = ""
 # ─── TOP INFO ───────────────────────────────────────────────
 
 [time]
-format = "╭─🕐[$time]($style)"
+format = "╭───┤ [🕐$time]($style)"
 time_format = "%H:%M"
 style = "bold #89b4fa"
 disabled = false
@@ -25,13 +25,13 @@ disabled = false
 # ─── USER & DIRECTORY ──────────────────────────────────────
 
 [username]
-format = " [$user]($style)"
+format = " │ [$user]($style)"
 style_user = "bold #cdd6f4"
 style_root = "bold #f38ba8"
 show_always = true
 
 [directory]
-format = " [➤](bold #89b4fa)  [$path]($style)[$read_only]($read_only_style)"
+format = " │ [$path]($style)[$read_only]($read_only_style)"
 style = "bold #89dceb"
 read_only = " 🔒"
 read_only_style = "bold #f38ba8"
@@ -42,7 +42,7 @@ home_symbol = "~"
 # ─── GIT ───────────────────────────────────────────────────
 
 [git_branch]
-format = " [$symbol$branch]($style)[→]($style)"
+format = " [$symbol$branch]($style) ➤ "
 symbol = " "
 style = "bold #a6e3a1"
 truncation_length = 25
@@ -65,7 +65,7 @@ added_style = "bold #a6e3a1"
 deleted_style = "bold #f38ba8"
 
 [git_status]
-format = ' [${modified}${staged}${deleted}${renamed}${conflicted}${untracked}${stashed}]($style) [${up_to_date}${ahead_behind}]($style)'
+format = '[${modified}${staged}${deleted}${renamed}${conflicted}${untracked}${stashed}]($style)[${up_to_date}${ahead_behind}]($style)'
 style = 'bold #f38ba8'
 
 conflicted = ' ⚡${count}'
@@ -81,7 +81,7 @@ deleted = ' ✖${count}'
 up_to_date = '✓'
 
 [kubernetes]
-format = " ⎈ [kubeconfig: $context]($style)"
+format = " [k8s: $context]($style)"
 style = "bold #cba6f7"
 disabled = false
 
@@ -138,6 +138,6 @@ success_symbol = ""
 # ─── FINAL CHARACTER ───────────────────────────────────────
 
 [character]
-success_symbol = "[╰─](bold #cdd6f4)[❯](bold #a6e3a1)"
-error_symbol = "[╰─](bold #cdd6f4)[❯](bold #f38ba8)"
-vimcmd_symbol = "[╰─❮](bold #cba6f7)"
+success_symbol = "[╰──────](bold #cdd6f4)[❯](bold #a6e3a1)"
+error_symbol = "[╰──────](bold #cdd6f4)[❯](bold #f38ba8)"
+vimcmd_symbol = "[╰─────❮](bold #cba6f7)"
