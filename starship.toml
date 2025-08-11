@@ -81,7 +81,7 @@ deleted = ' ✖${count}'
 up_to_date = '✓'
 
 [kubernetes]
-format = "  [k8s: $context]($style)"
+format = "  [K8s: $context]($style)"
 style = "bold #cba6f7"
 disabled = false
 

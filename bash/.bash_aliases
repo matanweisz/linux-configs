@@ -1,6 +1,6 @@
 # My full custom configuration for bash and the Linux terminal
 
-# Git branch (if inside repo) for PS1
+# Git branch (if inside repo) for PS
 parse_git_branch() {
     git rev-parse --is-inside-work-tree &>/dev/null || return
     git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD
@@ -14,11 +14,15 @@ alias ll='ls -lah --color=auto'
 alias dc='cd ..'
 
 alias vim='nvim'
+
 alias cat='bat --paging=never --style=plain'
 
 alias z='zellij --session temp-$(basename "$PWD") --layout compact && zellij kill-session temp-$(basename "$PWD")'
 
 alias ff='fzf --preview "bat --style=numbers --color=always {}" --layout=reverse --border | xargs -r nvim'
+
+alias lzg='lazygit'
+alias lzd='lazydocker'
 
 safe-rm() {
     for file in "$@"; do
@@ -91,11 +95,40 @@ alias k='kubectl'
 alias kg='kubectl get'
 alias ka='kubectl apply -f'
 
-alias kn='kubectl get nodes -o wide'
-alias kp='kubectl get pods'
-alias kd='kubectl get deployments'
-alias ks='kubectl get services'
-alias ki='kubectl get ingress'
+# Shell function for switching kuIbectl contexts
+kco() {
+    # Check if kubectl is installed
+    if ! command -v kubectl &>/dev/null; then
+        echo "kubectl is not installed. Please install it first." >&2
+        return 1
+    fi
+
+    # Get list of contexts
+    mapfile -t contexts < <(kubectl config get-contexts --no-headers | awk '{print $1}')
+
+    if [ ${#contexts[@]} -eq 0 ]; then
+        echo "No Kubernetes contexts found."
+        return 1
+    fi
+
+    echo "Available Kubernetes contexts:"
+    for i in "${!contexts[@]}"; do
+        current=""
+        [ "$(kubectl config current-context)" = "${contexts[$i]}" ] && current="*"
+        printf "  [%d] %s %s\n" "$((i + 1))" "$current" "${contexts[$i]}"
+    done
+
+    echo -n "Enter the number of the context to switch to: "
+    read -r choice
+
+    if ! [[ "$choice" =~ ^[0-9]+$ ]] || ((choice < 1 || choice > ${#contexts[@]})); then
+        echo "Invalid selection. Aborting." >&2
+        return 1
+    fi
+
+    selected_context="${contexts[$((choice - 1))]}"
+    kubectl config use-context "$selected_context"
+}
 
 # AWS
 # Shell function that prints information about my AWS EC2 instances
@@ -249,13 +282,13 @@ ec2stat() {
 }
 
 # Compiling aliases for gcc: c89, c99, debug mode, release mode
-#alias gd='gcc -ansi -pedantic-errors -Wall -Wextra -g'
-#alias gc='gcc -ansi -pedantic-errors -Wall -Wextra -DNDEBUG -O3'
+alias gcd='gcc -ansi -pedantic-errors -Wall -Wextra -g'
+alias gcc='gcc -ansi -pedantic-errors -Wall -Wextra -DNDEBUG -O3'
 #alias gd9='gcc -std=c99 -pedantic-errors -Wall -Wextra -g'
 #alias gc9='gcc -std=c99 -pedantic-errors -Wall -Wextra -DNDEBUG -O3'
 
 # Generate object files with gcc (compiles without linking)
-#alias gco='gcc -g -O -c'
+alias gco='gcc -g -O -c'
 
 # Valgrind
 alias vlg='valgrind --leak-check=yes --track-origins=yes'
