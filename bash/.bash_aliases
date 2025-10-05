@@ -9,6 +9,9 @@ parse_git_branch() {
 # My Custom PS1
 #export PS1='\[\e[38;5;108m\][\A] \[\e[38;5;110m\]~\u\[\e[38;5;110m\]\w \[\e[38;5;205m\]$(parse_git_branch)\[\e[38;5;205m\]➜\[\e[0m\] '
 
+# Workflow
+alias gem='gemini'
+
 # Linux
 alias ll='ls -lah --color=auto'
 alias dc='cd ..'
@@ -16,8 +19,6 @@ alias dc='cd ..'
 alias vim='nvim'
 
 alias cat='bat --paging=never --style=plain'
-
-alias z='zellij --session temp-$(basename "$PWD") --layout compact && zellij kill-session temp-$(basename "$PWD")'
 
 alias ff='fzf --preview "bat --style=numbers --color=always {}" --layout=reverse --border | xargs -r nvim'
 
@@ -37,10 +38,7 @@ safe-rm() {
 }
 alias rm='safe-rm'
 
-alias mkdir='foo1() { mkdir $1 && cd $1 ;}; foo1'
-
-alias cx='chmod +x'
-alias cx-='chmod -x'
+alias mkd='foo1() { mkdir $1 && cd $1 ;}; foo1'
 
 ip() {
     local ip info
@@ -281,14 +279,15 @@ ec2stat() {
     fi
 }
 
+# C Language
 # Compiling aliases for gcc: c89, c99, debug mode, release mode
-alias gcd='gcc -ansi -pedantic-errors -Wall -Wextra -g'
-alias gcc='gcc -ansi -pedantic-errors -Wall -Wextra -DNDEBUG -O3'
+#alias gd='gcc -ansi -pedantic-errors -Wall -Wextra -g'
+#alias gc='gcc -ansi -pedantic-errors -Wall -Wextra -DNDEBUG -O3'
 #alias gd9='gcc -std=c99 -pedantic-errors -Wall -Wextra -g'
 #alias gc9='gcc -std=c99 -pedantic-errors -Wall -Wextra -DNDEBUG -O3'
 
 # Generate object files with gcc (compiles without linking)
-alias gco='gcc -g -O -c'
+#alias gco='gcc -g -O -c'
 
 # Valgrind
-alias vlg='valgrind --leak-check=yes --track-origins=yes'
+#alias vlg='valgrind --leak-check=yes --track-origins=yes'

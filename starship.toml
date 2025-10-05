@@ -4,9 +4,9 @@ format = """
 $time\
 $username$directory\
 $line_break\
-│$git_branch$git_commit$git_state$git_metrics$git_status\
-$kubernetes\
+│$git_branch$git_commit$git_state$git_metrics$git_status \
 $package$nodejs$python$golang$rust$java$php$dotnet\
+$kubernetes\
 $cmd_duration$jobs$status\
 $line_break$character
 """
@@ -69,9 +69,9 @@ format = ' [${modified}${staged}${deleted}${renamed}${conflicted}${untracked}${s
 style = 'bold #f38ba8'
 
 conflicted = ' ⚡${count}'
-ahead = '↑${count}'
-behind = '↓${count}'
-diverged = '⇕↑${ahead_count} ↓${behind_count}'
+ahead = ' ↑${count}'
+behind = ' ↓${count}'
+diverged = ' ⇕↑${ahead_count} ↓${behind_count}'
 untracked = ' ?${count}'
 stashed = ' ≡${count}'
 modified = ' !${count}'
@@ -81,8 +81,8 @@ deleted = ' ✖${count}'
 up_to_date = '✓'
 
 [kubernetes]
-format = "  [K8s: $context]($style)"
-style = "bold #cba6f7"
+format = "  [K8s: $context]($style) "
+style = "italic #326CE5"
 disabled = false
 
 # ─── LANGUAGES / ENVIRONMENTS ──────────────────────────────

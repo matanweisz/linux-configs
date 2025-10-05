@@ -1,0 +1,35 @@
+[env]
+TERM = "xterm-256color"
+
+#[shell]
+#program = "zellij"
+#args = ["--layout", "devops"]
+
+[window]
+opacity = 0.9
+blur = true
+decorations = "None"
+dynamic_title = true
+title = "Alacritty"
+
+[[mouse.bindings]]
+mouse = "Middle"
+action = "PasteSelection"
+
+[keyboard]
+bindings = [
+  { key = "F11", action = "ToggleFullscreen" },
+  { key = "V", mods = "Control|Shift", action = "Paste" },
+  { key = "C", mods = "Control|Shift", action = "Copy" },
+  { key = "N", mods = "Control|Shift", action = "SpawnNewInstance" },
+  { key = "Plus", mods = "Control", action = "IncreaseFontSize" },
+  { key = "Minus", mods = "Control", action = "DecreaseFontSize" },
+]
+
+[cursor]
+style = "Block"
+unfocused_hollow = true
+
+[scrolling]
+history = 10000
+multiplier = 3

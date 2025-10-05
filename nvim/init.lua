@@ -4,7 +4,7 @@
 
 -- Bootstrap lazy.nvim plugin manager
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
 	vim.fn.system({
 		"git",
 		"clone",
@@ -483,11 +483,55 @@ require("lazy").setup({
 				lspconfig[server].setup(config)
 			end
 
+			-- Better diagnostics configuration
+			vim.diagnostic.config({
+				virtual_text = {
+					spacing = 4,
+					source = "if_many",
+					prefix = "●",
+				},
+				signs = {
+					active = true,
+				},
+				update_in_insert = false,
+				underline = true,
+				severity_sort = true,
+				float = {
+					focusable = false,
+					style = "minimal",
+					border = "rounded",
+					source = "always",
+					header = "",
+					prefix = "",
+				},
+			})
+
+			-- Diagnostic signs
+			local signs = {
+				{ name = "DiagnosticSignError", text = "" },
+				{ name = "DiagnosticSignWarn", text = "" },
+				{ name = "DiagnosticSignHint", text = "" },
+				{ name = "DiagnosticSignInfo", text = "" },
+			}
+			for _, sign in ipairs(signs) do
+				vim.fn.sign_define(sign.name, { texthl = sign.name, text = sign.text, numhl = "" })
+			end
+
 			-- LSP keymaps and autocommands
 			vim.api.nvim_create_autocmd("LspAttach", {
 				callback = function(args)
 					local client = vim.lsp.get_client_by_id(args.data.client_id)
 					local opts = { buffer = args.buf, silent = true }
+
+					-- Enable completion triggered by <c-x><c-o>
+					if client.server_capabilities.completionProvider then
+						vim.api.nvim_buf_set_option(args.buf, "omnifunc", "v:lua.vim.lsp.omnifunc")
+					end
+
+					-- Enable tag navigation
+					if client.server_capabilities.definitionProvider then
+						vim.api.nvim_buf_set_option(args.buf, "tagfunc", "v:lua.vim.lsp.tagfunc")
+					end
 
 					-- Navigation
 					vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
@@ -500,14 +544,25 @@ require("lazy").setup({
 					vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
 					vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
 
+					-- Diagnostics
+					vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
+					vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
+					vim.keymap.set("n", "<leader>ld", vim.diagnostic.open_float, opts)
+					vim.keymap.set("n", "<leader>lD", vim.diagnostic.setloclist, opts)
+
 					-- Code actions
 					vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
 					vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
 
-					-- Formatting
+					-- Formatting (prefer conform but fallback to LSP)
 					if client.server_capabilities.documentFormattingProvider then
 						vim.keymap.set("n", "<leader>lf", function()
-							vim.lsp.buf.format({ async = true })
+							local conform_ok, conform = pcall(require, "conform")
+							if conform_ok then
+								conform.format({ async = true, lsp_fallback = true })
+							else
+								vim.lsp.buf.format({ async = true })
+							end
 						end, opts)
 					end
 
@@ -518,25 +573,46 @@ require("lazy").setup({
 						print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
 					end, opts)
 
+					-- Highlight references under cursor
+					if client.server_capabilities.documentHighlightProvider then
+						local highlight_group = vim.api.nvim_create_augroup("LspDocumentHighlight", { clear = false })
+						vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+							buffer = args.buf,
+							group = highlight_group,
+							callback = vim.lsp.buf.document_highlight,
+						})
+						vim.api.nvim_create_autocmd("CursorMoved", {
+							buffer = args.buf,
+							group = highlight_group,
+							callback = vim.lsp.buf.clear_references,
+						})
+					end
+
 					-- Register LSP-specific which-key mappings when LSP attaches
-					local wk = require("which-key")
-					wk.add({
-						{ "<leader>l", group = "LSP", buffer = args.buf },
-						{ "<leader>lr", desc = "References", buffer = args.buf },
-						{ "<leader>lf", desc = "Format", buffer = args.buf },
-						{ "<leader>w", group = "Workspace", buffer = args.buf },
-						{ "<leader>wa", desc = "Add Workspace Folder", buffer = args.buf },
-						{ "<leader>wr", desc = "Remove Workspace Folder", buffer = args.buf },
-						{ "<leader>wl", desc = "List Workspace Folders", buffer = args.buf },
-						{ "<leader>c", group = "Code", buffer = args.buf },
-						{ "<leader>ca", desc = "Code Action", buffer = args.buf },
-						{ "<leader>rn", desc = "Rename", buffer = args.buf },
-						{ "gd", desc = "Go to Definition", buffer = args.buf },
-						{ "gD", desc = "Go to Declaration", buffer = args.buf },
-						{ "gi", desc = "Go to Implementation", buffer = args.buf },
-						{ "gt", desc = "Go to Type Definition", buffer = args.buf },
-						{ "K", desc = "Hover Documentation", buffer = args.buf },
-					})
+					local wk_ok, wk = pcall(require, "which-key")
+					if wk_ok then
+						wk.add({
+							{ "<leader>l", group = "LSP", buffer = args.buf },
+							{ "<leader>lr", desc = "References", buffer = args.buf },
+							{ "<leader>lf", desc = "Format", buffer = args.buf },
+							{ "<leader>ld", desc = "Line Diagnostics", buffer = args.buf },
+							{ "<leader>lD", desc = "Workspace Diagnostics", buffer = args.buf },
+							{ "<leader>w", group = "Workspace", buffer = args.buf },
+							{ "<leader>wa", desc = "Add Workspace Folder", buffer = args.buf },
+							{ "<leader>wr", desc = "Remove Workspace Folder", buffer = args.buf },
+							{ "<leader>wl", desc = "List Workspace Folders", buffer = args.buf },
+							{ "<leader>c", group = "Code", buffer = args.buf },
+							{ "<leader>ca", desc = "Code Action", buffer = args.buf },
+							{ "<leader>rn", desc = "Rename", buffer = args.buf },
+							{ "gd", desc = "Go to Definition", buffer = args.buf },
+							{ "gD", desc = "Go to Declaration", buffer = args.buf },
+							{ "gi", desc = "Go to Implementation", buffer = args.buf },
+							{ "gt", desc = "Go to Type Definition", buffer = args.buf },
+							{ "K", desc = "Hover Documentation", buffer = args.buf },
+							{ "[d", desc = "Previous Diagnostic", buffer = args.buf },
+							{ "]d", desc = "Next Diagnostic", buffer = args.buf },
+						})
+					end
 				end,
 			})
 		end,
@@ -828,7 +904,7 @@ require("lazy").setup({
 				defaults = {
 					prompt_prefix = " ",
 					selection_caret = " ",
-					path_display = { "truncate" },
+					path_display = { "smart" },
 					file_ignore_patterns = {
 						"%.git/",
 						"node_modules/",
@@ -837,6 +913,28 @@ require("lazy").setup({
 						"__pycache__/",
 						"%.pyc",
 						"%.pyo",
+						"%.DS_Store",
+						"target/",
+						"build/",
+						"dist/",
+						"coverage/",
+						"%.lock",
+					},
+					dynamic_preview_title = true,
+					results_title = false,
+					sorting_strategy = "ascending",
+					layout_config = {
+						horizontal = {
+							prompt_position = "top",
+							preview_width = 0.55,
+							results_width = 0.8,
+						},
+						vertical = {
+							mirror = false,
+						},
+						width = 0.87,
+						height = 0.80,
+						preview_cutoff = 120,
 					},
 					mappings = {
 						i = {
@@ -846,24 +944,50 @@ require("lazy").setup({
 							["<C-x>"] = actions.select_horizontal,
 							["<C-v>"] = actions.select_vertical,
 							["<C-t>"] = actions.select_tab,
+							["<C-u>"] = false, -- Clear prompt
+							["<C-d>"] = actions.delete_buffer,
 						},
 						n = {
 							["<C-x>"] = actions.select_horizontal,
 							["<C-v>"] = actions.select_vertical,
 							["<C-t>"] = actions.select_tab,
+							["dd"] = actions.delete_buffer,
 						},
+					},
+					vimgrep_arguments = {
+						"rg",
+						"--color=never",
+						"--no-heading",
+						"--with-filename",
+						"--line-number",
+						"--column",
+						"--smart-case",
+						"--hidden",
+						"--glob=!{.git,node_modules,dist,build,target}/*",
 					},
 				},
 				pickers = {
 					find_files = {
-						theme = "dropdown",
-						hidden = true,
+						find_command = { "rg", "--files", "--hidden", "--glob", "!{.git,node_modules,dist,build,target}/*" },
+						prompt_title = "Find Files",
 					},
 					live_grep = {
-						theme = "dropdown",
+						prompt_title = "Live Grep",
+						additional_args = function()
+							return { "--hidden", "--glob=!{.git,node_modules,dist,build,target}/*" }
+						end,
 					},
 					buffers = {
-						theme = "dropdown",
+						prompt_title = "Open Buffers",
+						sort_lastused = true,
+						sort_mru = true,
+					},
+					oldfiles = {
+						prompt_title = "Recent Files",
+					},
+					git_files = {
+						prompt_title = "Git Files",
+						show_untracked = true,
 					},
 				},
 			})
@@ -985,6 +1109,70 @@ require("lazy").setup({
 		config = function()
 			vim.g.terraform_fmt_on_save = 1
 			vim.g.terraform_align = 1
+		end,
+	},
+
+	-- Log file syntax highlighting and navigation
+	{
+		"MTDL9/vim-log-highlighting",
+		ft = { "log" },
+	},
+
+	-- Better JSON experience with path display
+	{
+		"gennaro-tedesco/nvim-jqx",
+		ft = { "json" },
+		config = function()
+			-- JSON query and formatting shortcuts
+			vim.keymap.set("n", "<leader>jq", ":JqxQuery<CR>", { desc = "JSON Query" })
+			vim.keymap.set("n", "<leader>jf", ":JqxFormat<CR>", { desc = "JSON Format" })
+		end,
+	},
+
+	-- Enhanced CSV handling for DevOps data
+	{
+		"chrisbra/csv.vim",
+		ft = { "csv" },
+		config = function()
+			-- CSV column highlighting and navigation
+			vim.g.csv_highlight_column = "y"
+			vim.g.csv_strict_columns = 1
+		end,
+	},
+
+	-- REST client for API testing (DevOps essential)
+	{
+		"rest-nvim/rest.nvim",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		ft = { "http" },
+		config = function()
+			require("rest-nvim").setup({
+				result_split_in_place = false,
+				result_split_horizontal = false,
+				skip_ssl_verification = false,
+				encode_url = true,
+				highlight = {
+					enabled = true,
+					timeout = 150,
+				},
+				result = {
+					show_url = true,
+					show_curl_command = false,
+					show_http_info = true,
+					show_headers = true,
+					formatters = {
+						json = "jq",
+						html = function(body)
+							return vim.fn.system({"tidy", "-i", "-q", "-"}, body)
+						end,
+					},
+				},
+			})
+
+			-- REST shortcuts
+			vim.keymap.set("n", "<leader>rr", "<Plug>RestNvim", { desc = "Run Request" })
+			vim.keymap.set("n", "<leader>rp", "<Plug>RestNvimPreview", { desc = "Preview Request" })
+			vim.keymap.set("n", "<leader>rl", "<Plug>RestNvimLast", { desc = "Repeat Last Request" })
 		end,
 	},
 
@@ -1112,7 +1300,6 @@ require("lazy").setup({
 		config = function()
 			local wk = require("which-key")
 			wk.setup({
-				-- Updated configuration for which-key v3
 				preset = "modern",
 				win = {
 					border = "rounded",
@@ -1127,21 +1314,22 @@ require("lazy").setup({
 					spacing = 3,
 					align = "left",
 				},
-				-- Disable some conflicting default mappings
-				spec = {
-					{ "<leader>f", group = "Find/File" },
-					{ "<leader>g", group = "Git" },
-					{ "<leader>h", group = "Git Hunks" },
-					{ "<leader>l", group = "LSP" },
-					{ "<leader>t", group = "Toggle" },
-					{ "<leader>w", group = "Workspace" },
-					{ "<leader>c", group = "Code" },
-					{ "<leader>d", group = "Debug" },
-					{ "<leader>q", group = "Session" },
-					{ "<leader>s", group = "Split/Session" },
-					{ "<leader>b", group = "Buffer" },
-					{ "<leader>x", group = "Trouble/Diagnostics" },
-				},
+			})
+			
+			-- Register all group mappings upfront
+			wk.add({
+				{ "<leader>f", group = "Find/File" },
+				{ "<leader>g", group = "Git" },
+				{ "<leader>h", group = "Git Hunks" },
+				{ "<leader>l", group = "LSP" },
+				{ "<leader>t", group = "Terminal/Toggle" },
+				{ "<leader>w", group = "Workspace" },
+				{ "<leader>c", group = "Code" },
+				{ "<leader>d", group = "Debug" },
+				{ "<leader>q", group = "Session" },
+				{ "<leader>s", group = "Split" },
+				{ "<leader>b", group = "Buffer" },
+				{ "<leader>x", group = "Trouble/Diagnostics" },
 			})
 		end,
 	},
@@ -1261,6 +1449,60 @@ require("lazy").setup({
 				options = { "buffers", "curdir", "tabpages", "winsize" },
 				pre_save = nil,
 			})
+		end,
+	},
+
+	-- Modern terminal integration
+	{
+		"akinsho/toggleterm.nvim",
+		version = "*",
+		config = function()
+			require("toggleterm").setup({
+				size = function(term)
+					if term.direction == "horizontal" then
+						return 15
+					elseif term.direction == "vertical" then
+						return vim.o.columns * 0.4
+					end
+				end,
+				open_mapping = [[<C-\>]],
+				hide_numbers = true,
+				shade_filetypes = {},
+				autochdir = false,
+				shade_terminals = true,
+				shading_factor = 2,
+				start_in_insert = true,
+				insert_mappings = true,
+				terminal_mappings = true,
+				persist_size = true,
+				persist_mode = true,
+				direction = "float",
+				close_on_exit = true,
+				shell = vim.o.shell,
+				auto_scroll = true,
+				float_opts = {
+					border = "curved",
+					winblend = 0,
+					highlights = {
+						border = "Normal",
+						background = "Normal",
+					},
+				},
+			})
+
+			-- Terminal key mappings inside terminal mode
+			function _G.set_terminal_keymaps()
+				local opts = { buffer = 0 }
+				vim.keymap.set("t", "<esc>", [[<C-\><C-n>]], opts)
+				vim.keymap.set("t", "jk", [[<C-\><C-n>]], opts)
+				vim.keymap.set("t", "<C-h>", [[<Cmd>wincmd h<CR>]], opts)
+				vim.keymap.set("t", "<C-j>", [[<Cmd>wincmd j<CR>]], opts)
+				vim.keymap.set("t", "<C-k>", [[<Cmd>wincmd k<CR>]], opts)
+				vim.keymap.set("t", "<C-l>", [[<Cmd>wincmd l<CR>]], opts)
+				vim.keymap.set("t", "<C-w>", [[<C-\><C-n><C-w>]], opts)
+			end
+
+			vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
 		end,
 	},
 
@@ -1579,10 +1821,71 @@ vim.api.nvim_create_autocmd("User", {
 				{ "<leader>se", desc = "Equal Splits" },
 				{ "<leader>sx", desc = "Close Split" },
 
+				-- DevOps specific mappings
+				{ "<leader>j", group = "JSON/Data" },
+				{ "<leader>jq", desc = "JSON Query" },
+				{ "<leader>jf", desc = "JSON Format" },
+
+				-- REST client mappings
+				{ "<leader>r", group = "REST/Request" },
+				{ "<leader>rr", desc = "Run Request" },
+				{ "<leader>rp", desc = "Preview Request" },
+				{ "<leader>rl", desc = "Repeat Last Request" },
+
 				-- Other mappings
 				{ "<leader>e", desc = "Find File in Tree" },
 				{ "<leader><leader>", desc = "Recent Files" },
 			})
+		end
+	end,
+})
+
+-- DevOps-specific autocommands for better workflow
+vim.api.nvim_create_augroup("devops-workflow", { clear = true })
+
+-- Auto-format Kubernetes YAML files on save
+vim.api.nvim_create_autocmd("BufWritePre", {
+	group = vim.api.nvim_create_augroup("k8s-yaml-format", { clear = true }),
+	pattern = { "*.k8s.yml", "*.k8s.yaml", "**/k8s/**/*.yml", "**/k8s/**/*.yaml", "**/kubernetes/**/*.yml", "**/kubernetes/**/*.yaml" },
+	callback = function()
+		local conform_ok, conform = pcall(require, "conform")
+		if conform_ok then
+			conform.format({ async = false, lsp_fallback = true })
+		end
+	end,
+})
+
+-- Enhanced file detection for DevOps files
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+	group = vim.api.nvim_create_augroup("devops-filetypes", { clear = true }),
+	callback = function()
+		local filename = vim.fn.expand("%:t")
+		local filepath = vim.fn.expand("%:p")
+		
+		-- Dockerfile variants
+		if filename:match("^Dockerfile") or filename:match("%.dockerfile$") then
+			vim.bo.filetype = "dockerfile"
+		-- Docker Compose variants
+		elseif filename:match("docker%-compose") or filename:match("compose%.ya?ml") then
+			vim.bo.filetype = "yaml.docker-compose"
+		-- Kubernetes YAML files
+		elseif filename:match("%.k8s%.ya?ml$") or filepath:match("/k8s/") or filepath:match("/kubernetes/") then
+			vim.bo.filetype = "yaml.kubernetes"
+		-- Helm templates
+		elseif filepath:match("/templates/") and filename:match("%.ya?ml$") then
+			vim.bo.filetype = "yaml.helm"
+		-- Terraform files
+		elseif filename:match("%.tf$") or filename:match("%.tfvars$") then
+			vim.bo.filetype = "terraform"
+		-- Ansible playbooks
+		elseif filename:match("playbook") or filename:match("%.ya?ml$") and filepath:match("/ansible/") then
+			vim.bo.filetype = "yaml.ansible"
+		-- Log files
+		elseif filename:match("%.log$") then
+			vim.bo.filetype = "log"
+		-- HTTP request files
+		elseif filename:match("%.http$") or filename:match("%.rest$") then
+			vim.bo.filetype = "http"
 		end
 	end,
 })
@@ -1707,7 +2010,7 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 		if event.match:match("^%w%w+://") then
 			return
 		end
-		local file = vim.loop.fs_realpath(event.match) or event.match
+		local file = vim.uv.fs_realpath(event.match) or event.match
 		vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
 	end,
 })

@@ -1,0 +1,16 @@
+just-perfection-desktop@just-perfection
+blur-my-shell@aunetx
+tophat@fflewddur.github.io
+clipboard-indicator@tudmotu.com
+dash-to-dock@micxgx.gmail.com
+appmenu-is-back@fthx
+quick-settings-tweaks@qwreey
+tilingshell@ferrarodomenico.com
+lockkeys@vaina.lt
+mediacontrols@cliffniff.github.com
+simple-timer@majortomvr.github.com
+rounded-window-corners@fxgn
+ding@rastersoft.com
+tiling-assistant@ubuntu.com
+ubuntu-appindicators@ubuntu.com
+ubuntu-dock@ubuntu.com
