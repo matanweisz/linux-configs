@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 # Create a timestamped backup directory
 BACKUP_DIR=./gnome-backup-$(date +%Y-%m-%d)
