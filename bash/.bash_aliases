@@ -69,8 +69,8 @@ pwdc() {
 
 # Python
 alias venv='python3 -m venv .venv && source .venv/bin/activate'
+alias devenv='deactivate && rm -rf .venv/bin/activate'
 alias py='python3'
-alias pipr='pip install -r'
 
 # Git
 alias gs='git status'
@@ -93,7 +93,7 @@ alias k='kubectl'
 alias kg='kubectl get'
 alias ka='kubectl apply -f'
 
-# Shell function for switching kuIbectl contexts
+# Shell function for switching kubectl contexts
 kco() {
     # Check if kubectl is installed
     if ! command -v kubectl &>/dev/null; then
@@ -129,6 +129,57 @@ kco() {
 }
 
 # AWS
+# Shell function for switching AWS CLI profiles
+awsuser() {
+    # Check if AWS CLI is installed
+    if ! command -v aws &>/dev/null; then
+        echo "aws CLI is not installed. Please install it first." >&2
+        return 1
+    fi
+
+    # Get list of configured profiles
+    mapfile -t profiles < <(aws configure list-profiles)
+
+    if [ ${#profiles[@]} -eq 0 ]; then
+        echo "No AWS profiles found."
+        return 1
+    fi
+
+    # Get current active profile (if set)
+    current_profile="${AWS_PROFILE:-default}"
+
+    echo "Available AWS profiles:"
+    for i in "${!profiles[@]}"; do
+        current=""
+        [ "$current_profile" = "${profiles[$i]}" ] && current="*"
+        printf "  [%d] %s %s\n" "$((i + 1))" "$current" "${profiles[$i]}"
+    done
+
+    echo -n "Enter the number of the profile to switch to: "
+    read -r choice
+
+    if ! [[ "$choice" =~ ^[0-9]+$ ]] || ((choice < 1 || choice > ${#profiles[@]})); then
+        echo "Invalid selection. Aborting." >&2
+        return 1
+    fi
+
+    selected_profile="${profiles[$((choice - 1))]}"
+
+    export AWS_PROFILE="$selected_profile"
+    echo "Switched to AWS profile: $AWS_PROFILE"
+
+    # Optional: confirm identity
+    if aws sts get-caller-identity --output text &>/dev/null; then
+        aws sts get-caller-identity --output text | awk '{print "Account:", $1, "\nUser:", $2}'
+    else
+        echo "Warning: Could not verify credentials for $AWS_PROFILE" >&2
+    fi
+
+    # Persist the profile for new shells
+    sed -i "/^export AWS_PROFILE=/d" ~/.bashrc
+    echo "export AWS_PROFILE=$AWS_PROFILE" >>~/.bashrc
+}
+
 # Shell function that prints information about my AWS EC2 instances
 ec2ls() {
     # Print table headers
