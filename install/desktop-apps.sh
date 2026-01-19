@@ -122,7 +122,7 @@ log_success "Nerd Fonts installed"
 # ============================================
 if [[ "${XDG_CURRENT_DESKTOP:-}" == *"GNOME"* ]]; then
     log_info "Installing GNOME tools..."
-    sudo apt install -y gnome-tweaks gnome-shell-extension-manager dconf-editor
+    sudo apt install -y gnome-shell gnome-tweaks gnome-shell-extension-manager dconf-editor
     log_success "GNOME tools installed"
 fi
 
