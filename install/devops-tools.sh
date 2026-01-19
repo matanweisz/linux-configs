@@ -53,11 +53,16 @@ fi
 log_success "Helm installed"
 
 log_info "Installing OpenLens..."
-if ! command -v openlens &>/dev/null; then
-    OPENLENS_VERSION=$(curl -s "https://api.github.com/repos/MuhammedKalwornia/OpenLens/releases/latest" | grep -Po '"tag_name": "v\K[^"]*' || echo "6.5.2-366")
-    curl -sLo /tmp/openlens.deb "https://github.com/MuhammedKalwornia/OpenLens/releases/download/v${OPENLENS_VERSION}/OpenLens-${OPENLENS_VERSION}.amd64.deb"
-    sudo apt install -y /tmp/openlens.deb
-    rm /tmp/openlens.deb
+if ! command -v openlens &>/dev/null && ! dpkg -l | grep -q openlens; then
+    # Download from MuhammedKalkan/OpenLens releases
+    OPENLENS_VERSION=$(curl -s "https://api.github.com/repos/MuhammedKalkan/OpenLens/releases/latest" | grep -Po '"tag_name": "v\K[^"]*' || echo "6.5.2-366")
+    curl -fLo /tmp/openlens.deb "https://github.com/MuhammedKalkan/OpenLens/releases/download/v${OPENLENS_VERSION}/OpenLens-${OPENLENS_VERSION}.amd64.deb"
+    if [ -f /tmp/openlens.deb ] && [ -s /tmp/openlens.deb ]; then
+        sudo dpkg -i /tmp/openlens.deb || sudo apt install -f -y
+        rm -f /tmp/openlens.deb
+    else
+        log_warn "OpenLens download failed - skipping (install manually from https://github.com/MuhammedKalkan/OpenLens/releases)"
+    fi
 fi
 log_success "OpenLens installed"
 
