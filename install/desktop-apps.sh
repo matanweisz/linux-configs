@@ -5,22 +5,6 @@
 #
 
 # ============================================
-# VS CODE
-# ============================================
-log_info "Installing Visual Studio Code..."
-if ! command -v code &>/dev/null; then
-    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg
-    sudo install -D -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
-    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | \
-        sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null
-    rm /tmp/packages.microsoft.gpg
-    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
-    sudo apt update
-    sudo apt install -y code
-fi
-log_success "VS Code installed"
-
-# ============================================
 # GOOGLE CHROME
 # ============================================
 log_info "Installing Google Chrome..."
@@ -44,10 +28,28 @@ log_success "Spotify installed"
 # WHATSAPP (via snap)
 # ============================================
 log_info "Installing WhatsApp..."
-if ! snap list whatsapp-for-linux &>/dev/null 2>&1; then
-    sudo snap install whatsapp-for-linux
+if ! snap list whatsapp-desktop-client &>/dev/null 2>&1; then
+    sudo snap install whatsapp-desktop-client
 fi
 log_success "WhatsApp installed"
+
+# ============================================
+# DRAW.IO (via snap)
+# ============================================
+log_info "Installing Draw.io..."
+if ! snap list drawio &>/dev/null 2>&1; then
+    sudo snap install drawio
+fi
+log_success "Draw.io installed"
+
+# ============================================
+# Bitwarden (via snap)
+# ============================================
+log_info "Installing Bitwarden..."
+if ! snap list bitwarden &>/dev/null 2>&1; then
+    sudo snap install bitwarden
+fi
+log_success "Bitwarden installed"
 
 # ============================================
 # ALACRITTY TERMINAL
