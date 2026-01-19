@@ -14,6 +14,7 @@ if ! command -v code &>/dev/null; then
     echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | \
         sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null
     rm /tmp/packages.microsoft.gpg
+    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
     sudo apt update
     sudo apt install -y code
 fi
@@ -54,6 +55,7 @@ log_success "WhatsApp installed"
 log_info "Installing Alacritty terminal..."
 if ! command -v alacritty &>/dev/null; then
     sudo add-apt-repository -y ppa:aslatter/ppa
+    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
     sudo apt update
     sudo apt install -y alacritty
 fi
@@ -65,6 +67,7 @@ log_success "Alacritty installed"
 log_info "Installing Ulauncher..."
 if ! command -v ulauncher &>/dev/null; then
     sudo add-apt-repository -y ppa:agornostal/ulauncher
+    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
     sudo apt update
     sudo apt install -y ulauncher
 fi

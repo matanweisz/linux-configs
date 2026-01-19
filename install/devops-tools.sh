@@ -21,6 +21,7 @@ if ! command -v docker &>/dev/null; then
     sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
     # Install Docker
+    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
     sudo apt update
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
@@ -111,6 +112,7 @@ if ! command -v gcloud &>/dev/null; then
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
         sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list > /dev/null
 
+    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
     sudo apt update
     sudo apt install -y google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin
 fi

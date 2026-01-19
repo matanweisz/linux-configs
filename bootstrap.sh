@@ -50,11 +50,11 @@ show_banner() {
     echo -e "${BLUE}"
     cat << 'EOF'
     ____              ____                ____              __       __
-   / __ \___ _   __  / __ \____  _____   / __ )____  ____  / /______/ /__________ ___
-  / / / / _ \ | / / / / / / __ \/ ___/  / __  / __ \/ __ \/ __/ ___/ __/ ___/ __ `__ \
- / /_/ /  __/ |/ / / /_/ / /_/ (__  )  / /_/ / /_/ / /_/ / /_(__  ) /_/ /  / / / / / /
-/_____/\___/|___/  \____/ .___/____/  /_____/\____/\____/\__/____/\__/_/  /_/ /_/ /_/
-                       /_/
+   / __ \___ _   __  / __ \____  _____   / __ )____  ____  / /______/ /_____ _____ ____
+  / / / / _ \ | / / / / / / __ \/ ___/  / __  / __ \/ __ \/ __/ ___/ __/ ___/ __ `/ __ \
+ / /_/ /  __/ |/ / / /_/ / /_/ (__  )  / /_/ / /_/ / /_/ / /_(__  ) /_/ /  / /_/ / /_/ /
+/_____/\___/|___/  \____/ .___/____/  /_____/\____/\____/\__/____/\__/_/   \__,_/ .___/
+                       /_/                                                     /_/
 EOF
     echo -e "${NC}"
     echo "Ubuntu DevOps Workstation Bootstrap"
@@ -97,6 +97,11 @@ custom_selection() {
 
 # Run installation
 run_install() {
+    # Clean apt cache to avoid corruption issues
+    log_info "Cleaning apt cache..."
+    sudo rm -rf /var/cache/apt/archives/lock /var/lib/dpkg/lock* /var/cache/apt/*.bin 2>/dev/null || true
+    sudo dpkg --configure -a 2>/dev/null || true
+
     # Always update system first
     log_info "Updating system packages..."
     sudo apt update -y
