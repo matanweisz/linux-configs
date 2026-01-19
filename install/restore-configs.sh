@@ -134,7 +134,7 @@ fi
 # ============================================
 # GNOME EXTENSIONS & SETTINGS
 # ============================================
-if [[ "$XDG_CURRENT_DESKTOP" == *"GNOME"* ]]; then
+if [[ "${XDG_CURRENT_DESKTOP:-}" == *"GNOME"* ]]; then
     log_info "Restoring GNOME extensions and settings..."
 
     # Find the most recent GNOME backup
