@@ -78,15 +78,6 @@ if ! snap list beekeeper-studio &>/dev/null 2>&1; then
 fi
 log_success "BeeKeeper Studio installed"
 
-# =============================================
-# Sweeper (via snap)
-# =============================================
-log_info "Installing Sweeper..."
-if ! snap list sweeper &>/dev/null 2>&1; then
-    sudo snap install sweeper --edge
-fi
-log_success "Sweeper installed"
-
 # ============================================
 # ALACRITTY TERMINAL
 # ============================================
