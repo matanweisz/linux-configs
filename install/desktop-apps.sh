@@ -15,8 +15,17 @@ if ! command -v google-chrome &>/dev/null; then
 fi
 log_success "Google Chrome installed"
 
+# =============================================
+# SNAP STORE
+# =============================================
+log_info "Installing Snap Store..."
+if ! command -v snap &>/dev/null; then
+    sudo snap install snap-store
+fi
+log_success "Snap Store installed"
+
 # ============================================
-# SPOTIFY
+# SPOTIFY (via snap)
 # ============================================
 log_info "Installing Spotify..."
 if ! snap list spotify &>/dev/null 2>&1; then
@@ -50,6 +59,33 @@ if ! snap list bitwarden &>/dev/null 2>&1; then
     sudo snap install bitwarden
 fi
 log_success "Bitwarden installed"
+
+# =============================================
+# Standard Notes (via snap)
+# =============================================
+log_info "Installing Standard Notes..."
+if ! snap list standard-notes &>/dev/null 2>&1; then
+    sudo snap install standard-notes
+fi
+log_success "Standard Notes installed"
+
+# =============================================
+# BeeKeeper Studio (via snap)
+# =============================================
+log_info "Installing BeeKeeper Studio..."
+if ! snap list beekeeper-studio &>/dev/null 2>&1; then
+    sudo snap install beekeeper-studio
+fi
+log_success "BeeKeeper Studio installed"
+
+# =============================================
+# Sweeper (via snap)
+# =============================================
+log_info "Installing Sweeper..."
+if ! snap list sweeper &>/dev/null 2>&1; then
+    sudo snap install sweeper --edge
+fi
+log_success "Sweeper installed"
 
 # ============================================
 # ALACRITTY TERMINAL

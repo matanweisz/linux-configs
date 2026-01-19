@@ -91,6 +91,13 @@ if ! command -v claude &>/dev/null; then
 fi
 log_success "Claude Code installed"
 
+# Onefetch (via snap)
+log_info "Installing Onefetch..."
+if ! command -v onefetch &>/dev/null; then
+    sudo snap install onefetch
+fi
+log_success "Onefetch installed"
+
 # Ensure ~/.local/bin is in PATH
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
     echo 'export PATH="$HOME/.local/bin:$PATH"' >>~/.bashrc
