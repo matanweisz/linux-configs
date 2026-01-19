@@ -91,13 +91,6 @@ if ! command -v claude &>/dev/null; then
 fi
 log_success "Claude Code installed"
 
-# Gemini CLI
-log_info "Installing Gemini CLI..."
-if ! command -v gemini &>/dev/null; then
-    npm install -g @google/gemini-cli@latest
-fi
-log_success "Gemini CLI installed"
-
 # Onefetch (via snap)
 log_info "Installing Onefetch..."
 if ! command -v onefetch &>/dev/null; then
