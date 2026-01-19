@@ -71,6 +71,7 @@ pwdc() {
 alias venv='python3 -m venv .venv && source .venv/bin/activate'
 alias devenv='deactivate && rm -rf .venv/bin/activate'
 alias py='python3'
+alias pipr='pip install -r'
 
 # Git
 alias gs='git status'
