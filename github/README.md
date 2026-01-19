@@ -1,45 +1,31 @@
-# GitHub SSH Setup Guide
+# GitHub SSH Setup
 
-## Prerequisites
+Quick guide for SSH authentication with GitHub.
 
-- Git installed
-- GitHub account
-
-## Setup Steps
-
-### 1. Generate SSH Key
+## Generate SSH Key
 
 ```bash
 ssh-keygen -t ed25519 -C "your-email@example.com" -f ~/.ssh/github_ed25519
 ```
 
-Enter a strong passphrase when prompted.
-
-### 2. Start SSH Agent and Add Key
+## Add Key to SSH Agent
 
 ```bash
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/github_ed25519
 ```
 
-### 3. Copy Public Key
+## Copy Public Key
 
 ```bash
 cat ~/.ssh/github_ed25519.pub
 ```
 
-Copy the entire output.
+Add to: https://github.com/settings/keys
 
-### 4. Add Key to GitHub
+## Configure SSH
 
-1. Go to [GitHub SSH Settings](https://github.com/settings/keys)
-2. Click **New SSH key**
-3. Paste your public key
-4. Give it a descriptive title (e.g., "Dell-XPS-Laptop")
-
-### 5. Configure SSH Client
-
-Create/edit `~/.ssh/config`:
+Create `~/.ssh/config`:
 
 ```
 Host github.com
@@ -50,7 +36,7 @@ Host github.com
     IdentitiesOnly yes
 ```
 
-### 6. Set Correct Permissions
+## Set Permissions
 
 ```bash
 chmod 700 ~/.ssh
@@ -59,40 +45,22 @@ chmod 644 ~/.ssh/github_ed25519.pub
 chmod 644 ~/.ssh/config
 ```
 
-### 7. Test Connection
+## Test Connection
 
 ```bash
 ssh -T git@github.com
 ```
 
-Expected output: `Hi username! You've successfully authenticated...`
-
-### 8. Configure Git to Use SSH
+## Use SSH for All GitHub URLs
 
 ```bash
 git config --global url."git@github.com:".insteadOf "https://github.com/"
 ```
 
-## Verification
-
-Clone a private repo:
-
-```bash
-git clone git@github.com:username/private-repo.git
-```
-
 ## Troubleshooting
 
-**Permission denied:**
-
 ```bash
-ssh -vT git@github.com  # Verbose output for debugging
-```
-
-**Wrong key being used:**
-
-```bash
-ssh-add -l  # List loaded keys
-ssh-add -D  # Clear all keys
-ssh-add ~/.ssh/github_ed25519  # Re-add correct key
+ssh -vT git@github.com    # Verbose debug
+ssh-add -l                # List loaded keys
+ssh-add -D                # Clear all keys
 ```

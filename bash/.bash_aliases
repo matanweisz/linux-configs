@@ -13,7 +13,10 @@ parse_git_branch() {
 alias gem='gemini'
 
 # Linux
-alias ll='ls -lah --color=auto'
+alias ls='eza --icons --group-directories-first'
+alias ll='eza -lah --icons --group-directories-first --git'
+alias la='eza -a --icons --group-directories-first'
+alias lt='eza --tree --level=2 --icons'
 alias dc='cd ..'
 
 alias vim='nvim'
