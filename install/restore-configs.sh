@@ -167,26 +167,21 @@ if [[ "${XDG_CURRENT_DESKTOP:-}" == *"GNOME"* ]]; then
                 log_success "Restored extension settings"
             fi
 
-            # Restore wallpaper/background image
-            if [ -d "$BACKUP_DIR/wallpaper" ]; then
-                WALLPAPER_BACKUP_DIR="$HOME/.local/share/backgrounds"
-                mkdir -p "$WALLPAPER_BACKUP_DIR"
-
-                # Copy wallpaper file
-                WALLPAPER_FILE=$(ls "$BACKUP_DIR/wallpaper"/*.{jpg,jpeg,png,webp} 2>/dev/null | head -1)
-                if [ -f "$WALLPAPER_FILE" ]; then
-                    WALLPAPER_NAME=$(basename "$WALLPAPER_FILE")
-                    cp "$WALLPAPER_FILE" "$WALLPAPER_BACKUP_DIR/$WALLPAPER_NAME"
-
-                    # Set as wallpaper
-                    gsettings set org.gnome.desktop.background picture-uri "file://$WALLPAPER_BACKUP_DIR/$WALLPAPER_NAME"
-                    gsettings set org.gnome.desktop.background picture-uri-dark "file://$WALLPAPER_BACKUP_DIR/$WALLPAPER_NAME"
-                    log_success "Restored wallpaper"
-                fi
-            fi
         fi
 
         rm -rf "$TEMP_DIR"
+
+        # Set wallpaper from repo (after dconf restore to avoid being overwritten)
+        if [ -f "$SCRIPT_DIR/wallpaper/default-wallpaper.jpg" ]; then
+            WALLPAPER_DIR="$HOME/.local/share/backgrounds"
+            mkdir -p "$WALLPAPER_DIR"
+            cp "$SCRIPT_DIR/wallpaper/default-wallpaper.jpg" "$WALLPAPER_DIR/"
+
+            gsettings set org.gnome.desktop.background picture-uri "file://$WALLPAPER_DIR/default-wallpaper.jpg"
+            gsettings set org.gnome.desktop.background picture-uri-dark "file://$WALLPAPER_DIR/default-wallpaper.jpg"
+            log_success "Restored wallpaper"
+        fi
+
         log_info "NOTE: Log out and back in for GNOME extensions to take effect"
     else
         log_warn "No GNOME backup found. Run gnome-backup.sh on current machine first."

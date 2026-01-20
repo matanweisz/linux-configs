@@ -4,7 +4,9 @@
 
 -- Bootstrap lazy.nvim plugin manager
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.uv.fs_stat(lazypath) then
+-- Use vim.loop for backward compatibility with Neovim < 0.10
+local uv = vim.uv or vim.loop
+if not uv.fs_stat(lazypath) then
 	vim.fn.system({
 		"git",
 		"clone",
@@ -2010,7 +2012,8 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 		if event.match:match("^%w%w+://") then
 			return
 		end
-		local file = vim.uv.fs_realpath(event.match) or event.match
+		local uv = vim.uv or vim.loop
+		local file = uv.fs_realpath(event.match) or event.match
 		vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
 	end,
 })

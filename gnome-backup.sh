@@ -25,31 +25,19 @@ fi
 gnome-extensions list > installed-extensions.txt 2>/dev/null || true
 
 # Export all extension configurations
-dconf dump /org/gnome/shell/extensions/ > extensions-settings.conf
+# Suppress GLib warnings about malformed keys from extensions
+dconf dump /org/gnome/shell/extensions/ > extensions-settings.conf 2>/dev/null
 
 # Full GNOME settings backup
-dconf dump /org/gnome/ > gnome-settings.conf
+dconf dump /org/gnome/ > gnome-settings.conf 2>/dev/null
 
 # Backup specific settings
-dconf dump /org/gnome/desktop/wm/preferences/ > window-manager-settings.conf
-dconf dump /org/gnome/desktop/interface/ > interface-settings.conf
+dconf dump /org/gnome/desktop/wm/preferences/ > window-manager-settings.conf 2>/dev/null
+dconf dump /org/gnome/desktop/interface/ > interface-settings.conf 2>/dev/null
 
 # Backup custom themes/icons if they exist
 [ -d ~/.themes ] && tar -czf custom-themes.tar.gz -C ~ .themes
 [ -d ~/.icons ] && tar -czf custom-icons.tar.gz -C ~ .icons
-
-# Backup wallpaper/background image
-WALLPAPER_URI=$(gsettings get org.gnome.desktop.background picture-uri 2>/dev/null || echo "")
-if [ -n "$WALLPAPER_URI" ] && [ "$WALLPAPER_URI" != "''" ]; then
-    # Remove the 'file://' prefix and quotes
-    WALLPAPER_PATH=$(echo "$WALLPAPER_URI" | sed "s|'file://||g" | sed "s|'||g")
-    if [ -f "$WALLPAPER_PATH" ]; then
-        mkdir -p wallpaper
-        cp "$WALLPAPER_PATH" wallpaper/
-        echo "$WALLPAPER_URI" > wallpaper/wallpaper-uri.txt
-        echo "Wallpaper backed up: $WALLPAPER_PATH"
-    fi
-fi
 
 # Create compressed archive in backup/ directory
 mkdir -p "$SCRIPT_DIR/backup"

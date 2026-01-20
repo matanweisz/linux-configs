@@ -19,7 +19,6 @@ sudo apt install -y \
     gitleaks \
     htop \
     jq \
-    neovim \
     ripgrep \
     tree \
     unzip \
@@ -39,6 +38,16 @@ if command -v fdfind &>/dev/null && ! command -v fd &>/dev/null; then
 fi
 
 log_success "Apt packages installed"
+
+# Neovim (latest stable from PPA)
+log_info "Installing Neovim..."
+if ! command -v nvim &>/dev/null; then
+    sudo add-apt-repository -y ppa:neovim-ppa/unstable
+    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
+    sudo apt update
+    sudo apt install -y neovim
+fi
+log_success "Neovim installed"
 
 # Starship prompt
 log_info "Installing Starship prompt..."
