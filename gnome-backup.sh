@@ -38,6 +38,19 @@ dconf dump /org/gnome/desktop/interface/ > interface-settings.conf
 [ -d ~/.themes ] && tar -czf custom-themes.tar.gz -C ~ .themes
 [ -d ~/.icons ] && tar -czf custom-icons.tar.gz -C ~ .icons
 
+# Backup wallpaper/background image
+WALLPAPER_URI=$(gsettings get org.gnome.desktop.background picture-uri 2>/dev/null || echo "")
+if [ -n "$WALLPAPER_URI" ] && [ "$WALLPAPER_URI" != "''" ]; then
+    # Remove the 'file://' prefix and quotes
+    WALLPAPER_PATH=$(echo "$WALLPAPER_URI" | sed "s|'file://||g" | sed "s|'||g")
+    if [ -f "$WALLPAPER_PATH" ]; then
+        mkdir -p wallpaper
+        cp "$WALLPAPER_PATH" wallpaper/
+        echo "$WALLPAPER_URI" > wallpaper/wallpaper-uri.txt
+        echo "Wallpaper backed up: $WALLPAPER_PATH"
+    fi
+fi
+
 # Create compressed archive in backup/ directory
 mkdir -p "$SCRIPT_DIR/backup"
 cd "$TEMP_DIR"

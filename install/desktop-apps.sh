@@ -109,12 +109,23 @@ log_info "Installing Nerd Fonts..."
 FONT_DIR="$HOME/.local/share/fonts"
 mkdir -p "$FONT_DIR"
 
+# Install FiraMono Nerd Font (primary font for Alacritty)
+if [ ! -f "$FONT_DIR/FiraMonoNerdFont-Regular.otf" ]; then
+    curl -sLo /tmp/FiraMono.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraMono.zip"
+    unzip -q /tmp/FiraMono.zip -d "$FONT_DIR"
+    rm /tmp/FiraMono.zip
+fi
+
+# Install JetBrains Mono Nerd Font (alternative font)
 if [ ! -f "$FONT_DIR/JetBrainsMonoNerdFont-Regular.ttf" ]; then
     curl -sLo /tmp/JetBrainsMono.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
     unzip -q /tmp/JetBrainsMono.zip -d "$FONT_DIR"
     rm /tmp/JetBrainsMono.zip
-    fc-cache -fv
 fi
+
+# Refresh font cache
+fc-cache -fv
+
 log_success "Nerd Fonts installed"
 
 # ============================================
