@@ -10,6 +10,7 @@ log_info "Installing core CLI tools from apt..."
 sudo apt install -y \
     bat \
     btop \
+    build-essential \
     curl \
     eza \
     fd-find \
@@ -19,6 +20,11 @@ sudo apt install -y \
     gitleaks \
     htop \
     jq \
+    nodejs \
+    npm \
+    python3 \
+    python3-pip \
+    python3-venv \
     ripgrep \
     tree \
     unzip \
