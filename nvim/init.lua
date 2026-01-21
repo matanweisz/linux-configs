@@ -74,7 +74,7 @@ vim.opt.termguicolors = true
 vim.opt.background = "dark"
 vim.opt.laststatus = 3
 vim.opt.showmode = false
-vim.opt.completeopt = "menuone,noselect"
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
 
 -- Enable faster startup
 vim.loader.enable()
@@ -158,22 +158,36 @@ require("lazy").setup({
 		config = function()
 			require("nvim-treesitter.configs").setup({
 				ensure_installed = {
-					"bash",
-					"dockerfile",
-					"json",
+					-- Essential for Neovim itself
 					"lua",
-					"python",
-					"yaml",
 					"vim",
 					"vimdoc",
-					"markdown",
+					"query",
+					"regex",
+					-- DevOps and Infrastructure
+					"bash",
+					"dockerfile",
 					"terraform",
 					"hcl",
+					"yaml",
+					"toml",
+					-- Programming languages
+					"python",
 					"go",
 					"javascript",
 					"typescript",
-					"toml",
+					-- Data formats
+					"json",
+					"xml",
+					-- Documentation
+					"markdown",
+					"markdown_inline",
+					-- Version control
+					"git_config",
+					"git_rebase",
+					"gitcommit",
 					"gitignore",
+					"gitattributes",
 				},
 				highlight = { enable = true },
 				indent = { enable = true },
@@ -212,6 +226,7 @@ require("lazy").setup({
 					"terraformls",
 					"lua_ls",
 					"pyright",
+					"gopls",
 				},
 			})
 		end,
@@ -267,6 +282,21 @@ require("lazy").setup({
 				lspconfig[server].setup({ capabilities = capabilities })
 			end
 
+			-- Gopls with DevOps-friendly settings
+			lspconfig.gopls.setup({
+				capabilities = capabilities,
+				settings = {
+					gopls = {
+						analyses = {
+							unusedparams = true,
+						},
+						staticcheck = true,
+						completeUnimported = true,
+						usePlaceholders = true,
+					},
+				},
+			})
+
 			-- Lua LSP with special config for Neovim
 			lspconfig.lua_ls.setup({
 				capabilities = capabilities,
@@ -281,6 +311,32 @@ require("lazy").setup({
 					},
 				},
 			})
+		end,
+	},
+
+	-- Snippets
+	{
+		"L3MON4D3/LuaSnip",
+		version = "v2.*",
+		build = "make install_jsregexp",
+		dependencies = { "rafamadriz/friendly-snippets" },
+		config = function()
+			local luasnip = require("luasnip")
+			-- Load VS Code-style snippets
+			require("luasnip.loaders.from_vscode").lazy_load()
+
+			-- Snippet jump keymaps
+			vim.keymap.set({ "i", "s" }, "<C-l>", function()
+				if luasnip.expand_or_jumpable() then
+					luasnip.expand_or_jump()
+				end
+			end, { silent = true })
+
+			vim.keymap.set({ "i", "s" }, "<C-h>", function()
+				if luasnip.jumpable(-1) then
+					luasnip.jump(-1)
+				end
+			end, { silent = true })
 		end,
 	},
 
@@ -316,9 +372,9 @@ require("lazy").setup({
 					["<S-Tab>"] = cmp.mapping.select_prev_item(),
 				}),
 				sources = cmp.config.sources({
-					{ name = "nvim_lsp" },
-					{ name = "luasnip" },
-					{ name = "buffer" },
+					{ name = "nvim_lsp", keyword_length = 1 },
+					{ name = "luasnip", keyword_length = 2 },
+					{ name = "buffer", keyword_length = 3 },
 					{ name = "path" },
 				}),
 			})
