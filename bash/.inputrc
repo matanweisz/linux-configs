@@ -1,0 +1,9 @@
+# Up/Down arrow history search
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+
+# Case-insensitive tab completion
+set completion-ignore-case on
+
+# Show all matches immediately
+set show-all-if-ambiguous on

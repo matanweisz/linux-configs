@@ -6,12 +6,6 @@ parse_git_branch() {
     git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD
 }
 
-# My Custom PS1
-#export PS1='\[\e[38;5;108m\][\A] \[\e[38;5;110m\]~\u\[\e[38;5;110m\]\w \[\e[38;5;205m\]$(parse_git_branch)\[\e[38;5;205m\]➜\[\e[0m\] '
-
-# Workflow
-alias gem='gemini'
-
 # Linux
 alias ls='eza --icons --group-directories-first'
 alias ll='eza -lah --icons --group-directories-first --git'
