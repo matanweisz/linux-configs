@@ -1,0 +1,149 @@
+# =============================================================================
+# Zsh Aliases - Mac DevOps (ported from Linux bash config)
+# =============================================================================
+
+# ---- Modern CLI replacements ----
+alias ls='eza --icons --group-directories-first'
+alias ll='eza -lah --icons --group-directories-first --git'
+alias la='eza -a --icons --group-directories-first'
+alias lt='eza --tree --level=2 --icons'
+alias cat='bat --paging=never --style=plain'
+alias vim='nvim'
+alias vi='nvim'
+alias top='btop'
+alias lg='lazygit'
+alias lzd='lazydocker'
+
+# ---- File ops ----
+alias ff='fzf --preview "bat --style=numbers --color=always {}" | xargs -o nvim'
+mkd() { mkdir -p "$1" && cd "$1" }
+pwdc() { pwd | pbcopy && echo "Copied to clipboard" }
+
+# ---- Network ----
+myip() {
+    local ip=$(curl -s --max-time 5 https://api64.ipify.org)
+    local info=$(curl -s --max-time 5 "https://ipinfo.io/${ip}/json")
+    echo "IP       : $ip"
+    echo "Location : $(echo $info | jq -r '"\(.city), \(.region), \(.country)"')"
+    echo "ISP      : $(echo $info | jq -r '.org')"
+}
+
+# ---- Python ----
+alias venv='python3 -m venv .venv && source .venv/bin/activate'
+alias py='python3'
+alias pipr='pip install -r'
+
+# ---- Git ----
+alias gs='git status'
+alias gp='git push'
+alias gc='git commit -m'
+alias ga='git add'
+alias gpu='git pull'
+alias gsw='git switch'
+alias gcl='git clone'
+alias glog='git log --oneline --graph --all --decorate'
+
+# ---- Terraform ----
+alias t='terraform'
+alias ti='terraform init'
+alias tp='terraform plan'
+alias ta='terraform apply -auto-approve'
+alias td='terraform destroy'
+alias tg='terragrunt'
+
+# ---- Kubernetes ----
+alias k='kubectl'
+alias kg='kubectl get'
+alias ka='kubectl apply -f'
+alias kd='kubectl describe'
+alias kl='kubectl logs'
+alias ke='kubectl exec -it'
+alias kns='kubens'
+alias kctx='kubectx'
+alias k9='k9s'
+
+# Interactive kubectl context switcher
+kco() {
+    if ! command -v kubectl &>/dev/null; then
+        echo "kubectl is not installed." >&2
+        return 1
+    fi
+    local contexts=("${(@f)$(kubectl config get-contexts --no-headers | awk '{print $1}')}")
+    if [[ ${#contexts[@]} -eq 0 ]]; then
+        echo "No contexts found."
+        return 1
+    fi
+    local current=$(kubectl config current-context 2>/dev/null)
+    echo "Kubernetes contexts:"
+    for i in {1..${#contexts[@]}}; do
+        local mark=""
+        [[ "$current" == "${contexts[$i]}" ]] && mark="*"
+        printf "  [%d] %s %s\n" "$i" "$mark" "${contexts[$i]}"
+    done
+    echo -n "Switch to: "
+    read -r choice
+    if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#contexts[@]} )); then
+        kubectl config use-context "${contexts[$choice]}"
+    else
+        echo "Invalid selection." >&2
+    fi
+}
+
+# Interactive AWS profile switcher
+awsuser() {
+    if ! command -v aws &>/dev/null; then
+        echo "aws CLI is not installed." >&2
+        return 1
+    fi
+    local profiles=("${(@f)$(aws configure list-profiles)}")
+    if [[ ${#profiles[@]} -eq 0 ]]; then
+        echo "No profiles found."
+        return 1
+    fi
+    echo "AWS profiles:"
+    for i in {1..${#profiles[@]}}; do
+        local mark=""
+        [[ "${AWS_PROFILE:-default}" == "${profiles[$i]}" ]] && mark="*"
+        printf "  [%d] %s %s\n" "$i" "$mark" "${profiles[$i]}"
+    done
+    echo -n "Switch to: "
+    read -r choice
+    if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#profiles[@]} )); then
+        export AWS_PROFILE="${profiles[$choice]}"
+        echo "Switched to: $AWS_PROFILE"
+        aws sts get-caller-identity --output text 2>/dev/null | awk '{print "Account:", $1, "| User:", $2}' || true
+    else
+        echo "Invalid selection." >&2
+    fi
+}
+
+# EC2 instance listing
+ec2ls() {
+    printf "%-20s %-10s %-20s %-15s %-15s %-10s\n" "Name" "State" "ID" "PublicIP" "PrivateIP" "Type"
+    printf '%0.s-' {1..95}; echo
+    aws ec2 describe-instances \
+        --query "Reservations[*].Instances[*].{Name:Tags[?Key==\`Name\`]|[0].Value,State:State.Name,ID:InstanceId,PublicIP:PublicIpAddress,PrivateIP:PrivateIpAddress,Type:InstanceType}" \
+        --output json | jq -r '.[][] | "\(.Name // "N/A")\t\(.State)\t\(.ID)\t\(.PublicIP // "N/A")\t\(.PrivateIP // "N/A")\t\(.Type)"' |
+        while IFS=$'\t' read -r name state id pub priv type; do
+            printf "%-20s %-10s %-20s %-15s %-15s %-10s\n" "$name" "$state" "$id" "$pub" "$priv" "$type"
+        done
+}
+
+# SSH to EC2 instance
+ec2ssh() {
+    [[ $# -lt 1 ]] && { echo "Usage: ec2ssh <instance-id>"; return 1; }
+    local id=$1
+    local key=$(aws ec2 describe-instances --instance-ids "$id" --query "Reservations[0].Instances[0].KeyName" --output text)
+    local ip=$(aws ec2 describe-instances --instance-ids "$id" --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+    local ami=$(aws ec2 describe-instances --instance-ids "$id" --query "Reservations[0].Instances[0].ImageId" --output text)
+    local os=$(aws ec2 describe-images --image-ids "$ami" --query "Images[0].Name" --output text)
+    local user="ec2-user"
+    [[ "$os" == *"ubuntu"* ]] && user="ubuntu"
+    [[ "$ip" == "None" || -z "$ip" ]] && { echo "No public IP found."; return 1; }
+    echo "Connecting to $ip as $user..."
+    ssh -i ~/ssh_keys/"${key}.pem" -o StrictHostKeyChecking=no "$user@$ip"
+}
+
+# ---- Docker ----
+alias dps='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
+alias dimg='docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"'

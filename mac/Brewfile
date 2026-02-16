@@ -1,0 +1,76 @@
+# =============================================================================
+# Brewfile - Mac DevOps Engineer
+# Install: brew bundle --file=~/git/linux-configs/mac/Brewfile
+# =============================================================================
+
+# ---- Core CLI (modern replacements) ----
+brew "eza"                # ls replacement
+brew "bat"                # cat replacement
+brew "fd"                 # find replacement
+brew "ripgrep"            # grep replacement
+brew "fzf"                # fuzzy finder
+brew "zoxide"             # smart cd
+brew "btop"               # system monitor
+brew "jq"                 # JSON processor
+brew "yq"                 # YAML processor
+brew "tree"
+brew "wget"
+brew "coreutils"          # GNU date, etc.
+brew "gnu-sed"            # GNU sed
+
+# ---- Shell & Prompt ----
+brew "starship"           # cross-shell prompt
+brew "atuin"              # shell history search
+brew "direnv"             # per-directory env vars
+
+# ---- Git ----
+brew "git"
+brew "git-delta"          # better git diffs
+brew "lazygit"            # git TUI
+brew "gh"                 # GitHub CLI
+brew "gitleaks"           # secret scanning
+
+# ---- DevOps / Cloud ----
+brew "awscli"
+brew "terraform"
+brew "terragrunt"
+brew "ansible"
+
+# ---- Kubernetes ----
+brew "kubectl"
+brew "kubectx"            # context/namespace switching
+brew "helm"
+brew "k9s"                # Kubernetes TUI
+brew "argocd"
+brew "stern"              # multi-pod log tailing
+
+# ---- Containers ----
+brew "lazydocker"         # Docker TUI
+brew "dive"               # inspect image layers
+brew "trivy"              # vulnerability scanner
+
+# ---- Languages ----
+brew "go"
+brew "python@3.12"
+brew "node"
+
+# ---- Editor & Terminal ----
+brew "neovim"
+brew "tmux"
+brew "stow"               # dotfiles symlink manager
+
+# =============================================================================
+# GUI Applications
+# =============================================================================
+cask "ghostty"
+cask "visual-studio-code"
+cask "docker"
+cask "raycast"
+cask "nikitabobko/tap/aerospace"
+cask "google-chrome"
+cask "slack"
+cask "whatsapp"
+cask "bitwarden"
+cask "spotify"
+cask "stats"              # menu bar system monitor
+cask "font-jetbrains-mono-nerd-font"

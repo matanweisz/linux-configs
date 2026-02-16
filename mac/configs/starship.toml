@@ -1,0 +1,52 @@
+# =============================================================================
+# Starship Prompt - Single Line, Tokyo Night Colors
+# Docs: https://starship.rs/config/
+# =============================================================================
+
+format = """$directory$git_branch$git_status$kubernetes$aws$cmd_duration$character"""
+
+add_newline = false
+
+[directory]
+format = "[$path]($style) "
+style = "bold #7aa2f7"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+symbol = " "
+style = "bold #9ece6a"
+truncation_length = 20
+
+[git_status]
+format = '[$all_status$ahead_behind]($style) '
+style = "#f7768e"
+ahead = "↑${count}"
+behind = "↓${count}"
+diverged = "↑${ahead_count}↓${behind_count}"
+modified = "!${count}"
+staged = "+${count}"
+untracked = "?${count}"
+conflicted = "=${count}"
+
+[kubernetes]
+format = "[$symbol$context]($style) "
+symbol = "k8s "
+style = "italic #7dcfff"
+disabled = false
+
+[aws]
+format = "[$symbol$profile]($style) "
+symbol = "aws "
+style = "#ff9e64"
+disabled = false
+
+[cmd_duration]
+format = "[$duration]($style) "
+style = "#e0af68"
+min_time = 2000
+
+[character]
+success_symbol = "[❯](bold #9ece6a)"
+error_symbol = "[❯](bold #f7768e)"
