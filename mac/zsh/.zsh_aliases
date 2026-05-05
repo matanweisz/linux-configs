@@ -19,6 +19,8 @@ alias ff='fzf --preview "bat --style=numbers --color=always {}" | xargs -o nvim'
 mkd() { mkdir -p "$1" && cd "$1" }
 pwdc() { pwd | pbcopy && echo "Copied to clipboard" }
 
+alias dc='cd ..'
+
 # ---- Network ----
 myip() {
     local ip=$(curl -s --max-time 5 https://api64.ipify.org)
@@ -147,3 +149,83 @@ ec2ssh() {
 # ---- Docker ----
 alias dps='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
 alias dimg='docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"'
+
+# ---- Modern CLI replacements (additions) ----
+alias du='dust'
+alias df='duf'
+alias ps='procs'
+alias htop='btm'
+alias http='xh'
+alias help='tldr'
+
+# ---- Kubectl with color (only if kubecolor installed) ----
+command -v kubecolor &>/dev/null && alias kubectl='kubecolor'
+
+# ---- Safe rm ----
+# Moves files to ~/.local/share/trash/<timestamp>/ instead of deleting.
+# Use \rm or /bin/rm to bypass and force a real delete.
+rm() {
+    if [[ $# -eq 0 ]]; then
+        echo "rm: missing operand" >&2
+        return 1
+    fi
+    local trash_root="$HOME/.local/share/trash"
+    local stamp; stamp="$(date +%Y%m%d-%H%M%S)"
+    local target_dir="$trash_root/$stamp"
+    mkdir -p "$target_dir"
+
+    local items=()
+    for arg in "$@"; do
+        case "$arg" in
+            -*) ;;  # silently drop flags like -rf — mv is recursive by default
+             *) items+=("$arg") ;;
+        esac
+    done
+
+    if [[ ${#items[@]} -eq 0 ]]; then
+        echo "rm: no targets given" >&2
+        return 1
+    fi
+
+    local item
+    for item in "${items[@]}"; do
+        if [[ ! -e "$item" && ! -L "$item" ]]; then
+            echo "rm: $item: No such file or directory" >&2
+            continue
+        fi
+        local base; base="$(basename "$item")"
+        local dest="$target_dir/$base"
+        [[ -e "$dest" ]] && dest="${dest}.$$"
+        command mv "$item" "$dest" && echo "trashed: $item -> $dest"
+    done
+}
+
+# Restore most recently trashed item back to the current dir.
+unrm() {
+    local trash_root="$HOME/.local/share/trash"
+    local latest; latest="$(ls -1t "$trash_root" 2>/dev/null | head -1)"
+    if [[ -z "$latest" ]]; then
+        echo "unrm: trash is empty" >&2
+        return 1
+    fi
+    if [[ $# -eq 0 ]]; then
+        echo "Latest trash batch: $latest"
+        ls -lh "$trash_root/$latest"
+        echo "Usage: unrm <name>   (restores from $latest)"
+        return 0
+    fi
+    local src="$trash_root/$latest/$1"
+    if [[ ! -e "$src" ]]; then
+        echo "unrm: $1 not found in $latest" >&2
+        return 1
+    fi
+    command mv "$src" "./" && echo "restored: $1"
+}
+
+# Empty trash batches older than 7 days.
+trash-clean() {
+    local trash_root="$HOME/.local/share/trash"
+    [[ ! -d "$trash_root" ]] && return 0
+    find "$trash_root" -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec command rm -rf {} +
+    echo "Cleaned trash batches older than 7 days from $trash_root"
+}

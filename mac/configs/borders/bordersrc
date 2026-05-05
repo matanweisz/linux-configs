@@ -1,0 +1,18 @@
+#!/bin/bash
+# =============================================================================
+# JankyBorders - focus ring (thick + high-contrast)
+# Tokyo Night palette match
+# =============================================================================
+
+options=(
+    style=round
+    width=8.0
+    hidpi=on
+    active_color=0xff7aa2f7
+    inactive_color=0xff414868
+    background_color=0x002a2f3a
+    blur_radius=0.0
+    blacklist="Finder,System Settings,QuickTime Player,Raycast"
+)
+
+borders "${options[@]}"

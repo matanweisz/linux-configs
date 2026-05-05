@@ -3,6 +3,11 @@
 # Install: brew bundle --file=~/git/linux-configs/mac/Brewfile
 # =============================================================================
 
+# ---- Taps ----
+tap "hashicorp/tap"
+tap "fluxcd/tap"
+tap "felixkratz/formulae"
+
 # ---- Core CLI (modern replacements) ----
 brew "eza"                # ls replacement
 brew "bat"                # cat replacement
@@ -32,7 +37,7 @@ brew "gitleaks"           # secret scanning
 
 # ---- DevOps / Cloud ----
 brew "awscli"
-brew "terraform"
+brew "hashicorp/tap/terraform"
 brew "terragrunt"
 brew "ansible"
 
@@ -54,19 +59,44 @@ brew "go"
 brew "python@3.12"
 brew "node"
 
-# ---- Editor & Terminal ----
+# ---- Editor ----
 brew "neovim"
-brew "tmux"
 brew "stow"               # dotfiles symlink manager
+
+# ---- Modern CLI (Tier 1 additions) ----
+brew "tlrc"               # tldr client (Rust) - manpages for humans
+brew "mkcert"             # locally-trusted dev TLS certs
+brew "gum"                # interactive shell scripts
+brew "just"               # command runner (Makefile alternative)
+brew "dust"               # modern du
+brew "duf"                # modern df
+brew "procs"              # modern ps
+brew "bottom"             # modern top/htop (binary: btm)
+brew "xh"                 # modern httpie (Rust)
+brew "fx"                 # interactive JSON viewer
+brew "glow"               # terminal markdown renderer
+brew "yamllint"           # YAML linter
+brew "git-absorb"         # auto-fixup commits
+brew "tree-sitter-cli"    # required by nvim-treesitter main branch to compile parsers
+brew "felixkratz/formulae/borders"  # JankyBorders focus ring
+
+# ---- Kubernetes power-user ----
+brew "kubescape"          # K8s security scanner (NSA/CIS/MITRE)
+brew "kubecolor"          # color-wraps every kubectl call
+brew "helm-docs"          # auto-generate helm chart docs
+brew "kustomize"          # K8s manifest customization
+brew "kind"               # local K8s clusters in Docker
+brew "helmfile"           # declarative helm releases
+brew "fluxcd/tap/flux"    # Flux GitOps CLI
 
 # =============================================================================
 # GUI Applications
 # =============================================================================
 cask "ghostty"
 cask "visual-studio-code"
-cask "docker"
-cask "raycast"
-cask "nikitabobko/tap/aerospace"
+cask "rancher"            # Rancher Desktop (Kubernetes + container management)
+cask "raycast"            # launcher, window tiling, keyboard shortcuts
+cask "alt-tab"            # keyboard window switcher (Cmd+Tab replacement)
 cask "google-chrome"
 cask "slack"
 cask "whatsapp"

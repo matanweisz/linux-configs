@@ -9,7 +9,7 @@ font-size = 14
 font-thicken = true
 
 # ---- Theme ----
-theme = Tokyo Night
+theme = TokyoNight Night
 
 # ---- Window ----
 window-padding-x = 12

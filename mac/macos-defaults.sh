@@ -46,7 +46,8 @@ defaults write com.apple.screencapture disable-shadow -bool true
 
 # ---- Trackpad ----
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
-defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
+# Three-finger drag intentionally NOT set — enabling it reassigns 3-finger swipes
+# from Mission Control/spaces to drag, which breaks the default gesture muscle memory.
 
 # ---- Misc ----
 defaults write com.apple.LaunchServices LSQuarantine -bool false          # no "open app?" dialog

@@ -6,15 +6,19 @@ Bootstrap automation for a Mac DevOps workstation. Installs tools via Homebrew, 
 
 ```bash
 cd mac
-./bootstrap.sh   # Choose option 7 to run everything
+./bootstrap.sh   # Choose option 11 to run everything
 ```
+
+> Updating an existing machine? Re-run `./bootstrap.sh` and pick option **10 (Cleanup orphaned packages)** to uninstall anything you removed from the Brewfile. The cleanup is opt-in and shows you what it would remove before doing it.
 
 After bootstrap:
 1. Open a new terminal for zsh config to load
 2. Run `nvim` — plugins install automatically on first launch
-3. Open tmux, press `Ctrl+a` then `I` to install tmux plugins
-4. Launch AeroSpace: `open -a AeroSpace`
-5. Generate SSH key: `ssh-keygen -t ed25519 -C "your@email.com"`
+3. Launch Raycast: `open -a Raycast` — handles window tiling and global keyboard shortcuts
+4. Launch AltTab: `open -a AltTab` — Cmd+Tab replacement that sees every window
+5. JankyBorders auto-starts as a `brew services` daemon (focus ring on the active window)
+6. Launch Rancher Desktop: `open -a "Rancher Desktop"` — first run sets up Kubernetes & container runtime
+7. Generate SSH key: `ssh-keygen -t ed25519 -C "your@email.com"`
 
 ---
 
@@ -34,13 +38,13 @@ mac/
 │   └── .zsh_aliases          # All aliases and shell functions
 ├── ghostty/
 │   └── config                # Terminal config (Tokyo Night theme)
-├── nvim/
-│   └── init.lua              # Neovim config (lazy.nvim, Tokyo Night)
-├── tmux/
-│   └── tmux.conf             # tmux config (Tokyo Night colors, TPM)
-└── aerospace/
-    └── aerospace.toml        # Tiling window manager (i3-like keybindings)
+├── ghostty/
+│   └── config                # Terminal config (Tokyo Night theme)
+└── nvim/
+    └── init.lua              # Neovim config (lazy.nvim, Tokyo Night)
 ```
+
+> Window management & keyboard shortcuts: **Raycast** (configured via its UI) + **JankyBorders** (focus ring, `configs/borders/bordersrc`) + **AltTab** (window switcher, configured via its UI).
 
 ---
 
@@ -83,7 +87,7 @@ mac/
 
 ### GUI Apps
 
-Ghostty, VS Code, Docker Desktop, Raycast, AeroSpace, Chrome, Slack, WhatsApp, Bitwarden, Spotify, Stats (menu bar monitor).
+Ghostty, VS Code, Rancher Desktop, Raycast, Chrome, Slack, WhatsApp, Bitwarden, Spotify, Stats (menu bar monitor).
 
 ---
 
@@ -91,16 +95,20 @@ Ghostty, VS Code, Docker Desktop, Raycast, AeroSpace, Chrome, Slack, WhatsApp, B
 
 ### Shell (Zsh + Zinit)
 
-**Plugin manager:** [Zinit](https://github.com/zdharma-continuum/zinit) — fast, supports lazy loading and turbo mode. Auto-installs on first shell launch if missing.
+**Plugin manager:** [Zinit](https://github.com/zdharma-continuum/zinit) — fast, supports lazy loading and turbo mode. Auto-installs on first shell launch if missing. The 2026 config uses turbo loading (`wait` + `lucid`) for sub-100ms startup.
 
-**Plugins:**
+**Plugins (turbo-loaded):**
 
 | Plugin | What it does |
 |--------|-------------|
 | `zsh-completions` | Extra completion definitions for common tools |
+| `fzf-tab` | Replaces tab completion with fzf fuzzy matching |
+| `fast-syntax-highlighting` | Real-time command coloring (~3× faster than zsh-syntax-highlighting) |
 | `zsh-autosuggestions` | Fish-like inline suggestions from history (accept with `Ctrl+Space`) |
-| `zsh-syntax-highlighting` | Real-time command coloring (valid = green, invalid = red) |
-| `fzf-tab` | Replaces default tab completion with fzf fuzzy matching |
+| `zsh-history-substring-search` | Up/Down arrows complete from history matching the typed prefix |
+| `zsh-you-should-use` | Nudges you when you type a command that has an alias |
+| `forgit` | fzf-driven git: `ga`, `glo`, `gd`, `gco`, etc. |
+| OMZ snippets | Completion-only snippets for kubectl, helm, terraform, aws, docker, gcloud |
 
 **Tool integrations loaded in `.zshrc`:**
 - `starship` — prompt
@@ -140,95 +148,90 @@ Single-line prompt showing only essential info with Tokyo Night colors:
 
 **Theme:** [Tokyo Night](https://github.com/folke/tokyonight.nvim) (night variant)
 
-**Plugins:**
+**Plugins (2026 stack):**
 
 | Plugin | Purpose |
 |--------|---------|
-| `nvim-tree` | File explorer sidebar (`Ctrl+N` to toggle) |
-| `lualine` | Statusline with git branch, diagnostics, file info |
-| `treesitter` | Syntax highlighting for 20+ languages |
-| `mason` + `mason-lspconfig` | Auto-installs LSP servers |
-| `nvim-lspconfig` | LSP configuration for bash, docker, yaml, json, terraform, python, go, lua |
-| `nvim-cmp` | Autocompletion with LSP, snippets, buffer, and path sources |
-| `telescope` | Fuzzy finder (`<leader>ff` files, `<leader>fg` grep, `<leader>fb` buffers) |
-| `gitsigns` | Git diff markers in the sign column |
-| `which-key` | Shows available keybindings when you press `<leader>` |
-| `nvim-autopairs` | Auto-close brackets and quotes |
-| `Comment.nvim` | Toggle comments with `gcc` (line) or `gc` (visual selection) |
-| `indent-blankline` | Visual indentation guides |
-| `lazygit.nvim` | Open lazygit inside Neovim (`<leader>gg`) |
-| `vim-tmux-navigator` | Seamless `Ctrl+H/J/K/L` navigation between tmux panes and Neovim splits |
+| `snacks.nvim` | Swiss-army-knife: picker, explorer, lazygit, terminal, dashboard, indent, notifier, statuscolumn, bigfile (replaces ~8 plugins) |
+| `blink.cmp` | Rust-powered completion (replaces nvim-cmp) |
+| `mason.nvim` v2 + `mason-lspconfig` v2 | Auto-installs LSP servers via the new `vim.lsp.config()` native API |
+| `mason-tool-installer` | Auto-installs CLI tools for formatters & linters |
+| `nvim-lspconfig` | LSP server registry (yamlls, terraformls, helm-ls, dockerls, bashls, basedpyright, gopls, marksman, jsonls, lua_ls) |
+| `nvim-treesitter` (+ textobjects) | Syntax + indentation for 25+ languages |
+| `SchemaStore.nvim` | JSON/YAML schema bundle (Kubernetes, GitHub Actions, kustomization, etc.) |
+| `oil.nvim` | Buffer-as-directory editing — press `-` to open parent dir |
+| `gitsigns.nvim` | Diff markers, hunk staging, blame |
+| `diffview.nvim` | Side-by-side diff / PR-style review |
+| `lualine.nvim` | Statusline |
+| `which-key.nvim` | Keymap discoverability |
+| `flash.nvim` | `s{char}{char}` motion jumping |
+| `trouble.nvim` v3 | Diagnostics / quickfix panel |
+| `todo-comments.nvim` | TODO/FIXME/HACK highlighting + search |
+| `mini.surround` / `mini.pairs` / `mini.ai` / `mini.comment` | Editor utilities |
+| `render-markdown.nvim` | In-buffer markdown rendering (headings, code blocks, tables) |
+| `conform.nvim` | Format-on-save dispatcher (stylua, ruff, gofmt, terraform fmt, yamlfmt, prettier, shfmt) |
+| `nvim-lint` | Async linting (hadolint, tflint, yamllint, ruff, shellcheck, actionlint) |
 
-**LSP servers auto-installed:** bashls, dockerls, yamlls (with Kubernetes schemas), jsonls, terraformls, pyright, gopls, lua_ls.
+**LSP servers auto-installed:** yamlls (with Kubernetes + datreeio CRD store), terraformls, helm-ls, dockerls, bashls, basedpyright, gopls, marksman, jsonls, lua_ls.
+
+**CLI tools auto-installed (via mason-tool-installer):** hadolint, tflint, actionlint, shellcheck, yamllint, ruff, stylua, shfmt, prettier, markdownlint-cli2, yamlfmt, goimports.
 
 **Key bindings:**
 
 | Key | Action |
 |-----|--------|
 | `Space` | Leader key |
-| `Ctrl+N` | Toggle file tree |
+| `Ctrl+N` | Toggle file tree (snacks.explorer) |
+| `Space+e` | Reveal current file in explorer |
+| `-` | Open parent directory as buffer (oil.nvim) |
 | `Space+ff` | Find files |
 | `Space+fg` | Live grep |
 | `Space+fb` | Open buffers |
+| `Space+fr` | Recent files |
 | `Space+gg` | Open LazyGit |
+| `Space+gd` | Open Diffview |
+| `Space+cc` | Toggle Claude Code in floating terminal |
+| `Space+tt` | Toggle generic terminal |
+| `Space+xx` | Toggle Trouble diagnostics |
+| `s{char}{char}` | Flash jump |
 | `gd` | Go to definition |
 | `gr` | Find references |
 | `K` | Hover docs |
 | `Space+rn` | Rename symbol |
 | `Space+ca` | Code actions |
-| `Space+f` | Format file |
+| `Space+f` | Format file (conform.nvim) |
 | `Shift+H/L` | Previous/next buffer |
-| `Ctrl+H/J/K/L` | Navigate splits (works across tmux panes) |
-| `gcc` | Toggle line comment |
-| `gc` (visual) | Toggle block comment |
+| `Ctrl+H/J/K/L` | Navigate splits |
 
-### tmux
+### Raycast (window tiling + keyboard shortcuts)
 
-**Prefix:** `Ctrl+a` (instead of default `Ctrl+b`)
+Raycast is the unified launcher / window-tiler / clipboard manager / shortcut runner. The bootstrap installs it via Brew but does **not** sync settings — those are configured per-machine through Raycast Pro's iCloud sync or its built-in import/export.
 
-**Theme:** Tokyo Night colors applied directly (no theme plugin needed).
+What Raycast handles in this setup:
+- **Window tiling** (Settings → Window Management): half/quarter splits, full-screen, throw-to-display, etc. Avoid colliding with Ghostty (`Cmd+D`/`Cmd+Shift+D` splits).
+- **Application launching** (`Option+Space` is the default; rebind in Settings → General if you want).
+- **Clipboard history**, snippets, calculator, system commands.
 
-**Plugins (via TPM):**
+No config file lives in this repo — set everything up in Raycast's UI on first launch.
 
-| Plugin | Purpose |
-|--------|---------|
-| `tmux-sensible` | Sensible default settings |
-| `tmux-resurrect` | Save/restore tmux sessions across restarts |
-| `tmux-continuum` | Auto-saves sessions every 15 minutes, auto-restores on tmux start |
-| `tmux-yank` | Copy to system clipboard |
-| `vim-tmux-navigator` | Seamless Ctrl+H/J/K/L between tmux panes and Neovim |
+### JankyBorders (focus ring)
 
-**Key bindings:**
+Draws an 8px rounded border around the focused window in Tokyo Night blue (`#7aa2f7`); inactive windows get a dim border (`#414868`). Configured at `~/.config/borders/bordersrc` and run as a `brew services` daemon.
 
-| Key | Action |
-|-----|--------|
-| `Ctrl+a \|` | Split pane vertically |
-| `Ctrl+a -` | Split pane horizontally |
-| `Ctrl+a h/j/k/l` | Navigate panes |
-| `Ctrl+a H/J/K/L` | Resize panes |
-| `Ctrl+a c` | New window |
-| `Ctrl+a r` | Reload config |
-| `Ctrl+a [` | Enter copy mode (vi keys, `v` to select, `y` to copy) |
+```bash
+brew services restart borders   # apply config changes
+```
 
-### AeroSpace (Tiling Window Manager)
+Bootstrap option 8 installs the service. Border thickness, colors, and the blacklist are easy to tweak in the file.
 
-i3-like tiling window manager for macOS. Does **not** require disabling SIP.
+### AltTab (window switcher)
 
-**Key bindings (all use `Alt`):**
+[AltTab](https://github.com/lwouis/alt-tab-macos) replaces macOS's stock Cmd+Tab with a Windows-style switcher that lists every window across every Space. Open `AltTab → Preferences` after first launch and turn on:
 
-| Key | Action |
-|-----|--------|
-| `Alt+H/J/K/L` | Focus window left/down/up/right |
-| `Alt+Shift+H/J/K/L` | Move window left/down/up/right |
-| `Alt+1-6` | Switch to workspace |
-| `Alt+Shift+1-6` | Move window to workspace |
-| `Alt+F` | Toggle fullscreen |
-| `Alt+Shift+Space` | Toggle floating |
-| `Alt+/` | Toggle horizontal/vertical split |
-| `Alt+Shift+-/=` | Shrink/grow window |
-| `Alt+Shift+Tab` | Move workspace to next monitor |
+- **Show windows from all spaces**
+- **Start at login**
 
-Finder and System Preferences windows float automatically.
+Default trigger is **Cmd+Tab** (it overrides the system one). All other defaults are sane.
 
 ### Git
 
@@ -291,3 +294,65 @@ The `macos-defaults.sh` script applies these developer-friendly settings:
 
 ### Docker
 `dps` (running containers table), `dimg` (images table)
+
+### Modern CLI replacements (2026 additions)
+| Alias | Tool |
+|-------|------|
+| `du` | `dust` (visual disk usage) |
+| `df` | `duf` (colored partition view) |
+| `ps` | `procs` (colored process tree) |
+| `htop` | `btm` (bottom — modern alternative) |
+| `http` | `xh` (Rust httpie, ~10× faster) |
+| `help` | `tldr` (man pages for humans) |
+| `kubectl` | `kubecolor` (colored kubectl output, transparent wrapper) |
+
+---
+
+## Safe `rm`
+
+The shell defines `rm` as a function that **moves** files to `~/.local/share/trash/<timestamp>/` instead of deleting them. The trash dir survives reboots.
+
+| Command | Behavior |
+|---------|----------|
+| `rm <path>...` | Trash items into a new timestamped batch |
+| `unrm` | Show contents of the most recent trash batch |
+| `unrm <name>` | Restore an item from the most recent batch back to `./` |
+| `trash-clean` | Permanently delete all batches older than 7 days |
+| `\rm <path>` | Bypass the function — real `/bin/rm` deletion (use this when you mean it) |
+| `/bin/rm <path>` | Same effect as `\rm` — direct binary call |
+
+The `\rm` escape works because zsh expands aliases but NOT functions when prefixed with `\`. Same trick lets you call `\ls` to bypass the eza alias, etc.
+
+---
+
+## Claude Code
+
+Bootstrap option 7 installs Claude Code via the official native installer (auto-updating) and copies a custom statusline + permissions to `~/.claude/`.
+
+The statusline shows two lines:
+
+```
+[Sonnet 4.6] high  📁 mac  🌿 main  ⎈ prod-eks  ☁️ default
+██████████ 64% | $0.42 | ⏱ 12m04s
+```
+
+Top line: model + effort + dir + git branch + k8s context + AWS profile.
+Bottom line: context bar (green/yellow/red by usage) + cost + duration.
+
+Customize in `mac/claude/statusline.sh`. The script caches `git`/`kubectl` lookups for 5 seconds per session to avoid spam.
+
+The included `~/.claude/settings.json` pre-allows safe read-only Bash commands (git status, kubectl get, ls, cat, rg, etc.) so you don't get permission prompts for them.
+
+---
+
+## What's new in the 2026 refresh
+
+- **Window mgmt:** Raycast (tiling + shortcuts) + JankyBorders (8px focus ring) + AltTab (Cmd+Tab replacement)
+- **Containers/K8s:** Rancher Desktop replaces Docker Desktop (open source, integrated K8s)
+- **No tmux:** removed — workflow uses Ghostty splits when terminal multiplexing is needed
+- **Safe rm:** `rm` now trashes to `~/.local/share/trash/<ts>/`; added `unrm` + `trash-clean`
+- **Zsh:** turbo-loading; switched to `fast-syntax-highlighting`; added `zsh-history-substring-search`, `you-should-use`, `forgit`, OMZ completion snippets for kubectl/helm/tf/aws/docker/gcloud
+- **Brewfile:** added `tlrc`, `mkcert`, `gum`, `just`, `dust`, `duf`, `procs`, `bottom`, `xh`, `fx`, `glow`, `yamllint`, `git-absorb`, `kubescape`, `kubecolor`, `helm-docs`, `kustomize`, `kind`, `helmfile`, `flux`
+- **kubectl plugins:** krew + `tree`, `neat`, `view-secret`, `resource-capacity`, `images`, `who-can`, `node-shell`, `deprecations`, `explore`, `rolesum`
+- **Claude Code:** native installer + DevOps statusline + permission defaults
+- **Neovim:** full 2026 stack — `snacks.nvim`, `blink.cmp`, `oil.nvim`, `conform.nvim`, `nvim-lint`, `flash.nvim`, `trouble.nvim` v3, `mini.nvim`, `render-markdown.nvim`, `SchemaStore.nvim`. LSP via Mason v2 + native `vim.lsp.config()`. Added `helm-ls` and `basedpyright`.
