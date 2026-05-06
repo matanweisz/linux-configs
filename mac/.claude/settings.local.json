@@ -4,7 +4,8 @@
       "WebSearch",
       "Bash(brew tap *)",
       "WebFetch(domain:github.com)",
-      "Bash(brew list *)"
+      "Bash(brew list *)",
+      "Bash(defaults domains *)"
     ]
   }
 }

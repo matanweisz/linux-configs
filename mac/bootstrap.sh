@@ -87,12 +87,40 @@ restore_configs() {
     cp "${SCRIPT_DIR}/claude/statusline.sh"    ~/.claude/statusline.sh
     chmod +x ~/.claude/statusline.sh
 
+    # Claude Code: CLAUDE.md + agents/commands/hooks/output-styles/rules
+    if [[ -f "${SCRIPT_DIR}/claude/CLAUDE.md" ]]; then
+        cp "${SCRIPT_DIR}/claude/CLAUDE.md" ~/.claude/CLAUDE.md
+    fi
+    for sub in agents commands hooks output-styles rules; do
+        if [[ -d "${SCRIPT_DIR}/claude/${sub}" ]]; then
+            mkdir -p "$HOME/.claude/${sub}"
+            cp -R "${SCRIPT_DIR}/claude/${sub}/." "$HOME/.claude/${sub}/"
+        fi
+    done
+    # Hooks must be executable
+    if [[ -d "$HOME/.claude/hooks" ]]; then
+        chmod +x "$HOME/.claude/hooks/"*.sh 2>/dev/null || true
+    fi
+    if grep -q "REPLACE_ME_BEFORE_USE" ~/.claude/settings.json 2>/dev/null; then
+        log_warn "Claude settings.json has placeholder ANTHROPIC_AUTH_TOKEN — set it before launching claude"
+    fi
+
     # btop config from linux-configs if available
     if [[ -f "${SCRIPT_DIR}/../configs/btop/btop.conf" ]]; then
         mkdir -p ~/.config/btop/themes
         cp "${SCRIPT_DIR}/../configs/btop/btop.conf" ~/.config/btop/btop.conf
         cp "${SCRIPT_DIR}/../configs/btop/themes/catppuccin.theme" ~/.config/btop/themes/
         log_success "btop config restored"
+    fi
+
+    # Raycast defaults (portable plist only — see mac/raycast/README.md for snippets/quicklinks)
+    if [[ -f "${SCRIPT_DIR}/raycast/com.raycast.macos.plist" ]]; then
+        if pgrep -xq Raycast; then
+            log_warn "Raycast is running — skipping defaults import (quit Raycast then re-run option 3)"
+        else
+            defaults import com.raycast.macos "${SCRIPT_DIR}/raycast/com.raycast.macos.plist"
+            log_success "Raycast defaults restored (snippets/quicklinks need .rayconfig — see mac/raycast/README.md)"
+        fi
     fi
 
     # SSH template
@@ -203,6 +231,23 @@ setup_safe_rm() {
 
 install_gcloud() {
     local GCLOUD_HOME="$HOME/google-cloud-sdk"
+
+    # Strip any stale gcloud rc lines pointing somewhere other than $GCLOUD_HOME
+    # (Google's installer appends these unconditionally if run without --path-update=false,
+    # and they shadow the repo-managed block when the path is wrong.)
+    if [[ -f "$HOME/.zshrc" ]] && grep -qE "google-cloud-sdk/(path|completion)\.zsh\.inc" "$HOME/.zshrc"; then
+        if grep -E "google-cloud-sdk/(path|completion)\.zsh\.inc" "$HOME/.zshrc" \
+            | grep -vqE "\\\$HOME/google-cloud-sdk|$HOME/google-cloud-sdk"; then
+            log_warn "Found stale gcloud rc lines in ~/.zshrc — stripping them"
+            cp "$HOME/.zshrc" "$HOME/.zshrc.bak.$(date +%s)"
+            # Drop the two Google-installer comment+if pairs (path and completion)
+            sed -i '' \
+                -e '/^# The next line updates PATH for the Google Cloud SDK\.$/,/google-cloud-sdk\/path\.zsh\.inc'\''; fi$/d' \
+                -e '/^# The next line enables shell command completion for gcloud\.$/,/google-cloud-sdk\/completion\.zsh\.inc'\''; fi$/d' \
+                "$HOME/.zshrc"
+        fi
+    fi
+
     if [[ -x "$GCLOUD_HOME/bin/gcloud" ]]; then
         log_success "gcloud SDK already installed at $GCLOUD_HOME"
         return 0
