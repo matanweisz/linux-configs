@@ -1,0 +1,14 @@
+.DS_Store
+._*
+.idea/
+.vscode/
+*.swp
+*.swo
+.env
+.env.local
+node_modules/
+__pycache__/
+.venv/
+.terraform/
+*.tfstate
+*.tfstate.backup

@@ -1,0 +1,95 @@
+# =============================================================================
+# Brewfile - Ubuntu/Linux DevOps (Homebrew on Linux)
+# Install: brew bundle --file=~/git/linux-configs/Brewfile
+#
+# CLI formulae only. GUI apps are NOT here — Homebrew casks are macOS-only,
+# so desktop apps are installed via apt/deb/snap in install/desktop-apps.sh.
+# Derived from mac/Brewfile minus casks and macOS-only formulae.
+#   - dropped: coreutils, gnu-sed   (GNU userland is native on Linux)
+#   - dropped: felixkratz/formulae/borders  (JankyBorders is macOS-only)
+# =============================================================================
+
+# ---- Taps ----
+tap "hashicorp/tap"
+tap "fluxcd/tap"
+
+# ---- Core CLI (modern replacements) ----
+brew "eza"                # ls replacement
+brew "bat"                # cat replacement
+brew "fd"                 # find replacement
+brew "ripgrep"            # grep replacement
+brew "fzf"                # fuzzy finder
+brew "zoxide"             # smart cd
+brew "btop"               # system monitor
+brew "jq"                 # JSON processor
+brew "yq"                 # YAML processor
+brew "tree"
+brew "wget"
+
+# ---- Shell & Prompt ----
+brew "starship"           # cross-shell prompt
+brew "atuin"              # shell history search
+brew "direnv"             # per-directory env vars
+
+# ---- Git ----
+brew "git"
+brew "git-delta"          # better git diffs
+brew "lazygit"            # git TUI
+brew "gh"                 # GitHub CLI
+brew "gitleaks"           # secret scanning
+
+# ---- DevOps / Cloud ----
+brew "awscli"
+brew "hashicorp/tap/terraform"
+brew "terragrunt"
+brew "ansible"
+
+# ---- Kubernetes ----
+brew "kubectl"
+brew "kubectx"            # context/namespace switching
+brew "helm"
+brew "k9s"                # Kubernetes TUI
+brew "argocd"
+brew "stern"              # multi-pod log tailing
+
+# ---- Containers ----
+brew "lazydocker"         # Docker TUI
+brew "dive"               # inspect image layers
+brew "trivy"              # vulnerability scanner
+
+# ---- Languages ----
+brew "go"
+brew "python@3.12"
+brew "node"
+
+# ---- Editor ----
+brew "neovim"
+brew "stow"               # dotfiles symlink manager
+
+# ---- Modern CLI (Tier 1 additions) ----
+brew "tlrc"               # tldr client (Rust) - manpages for humans
+brew "mkcert"             # locally-trusted dev TLS certs
+brew "gum"                # interactive shell scripts
+brew "just"               # command runner (Makefile alternative)
+brew "dust"               # modern du
+brew "duf"                # modern df
+brew "procs"              # modern ps
+brew "bottom"             # modern top/htop (binary: btm)
+brew "xh"                 # modern httpie (Rust)
+brew "fx"                 # interactive JSON viewer
+brew "glow"               # terminal markdown renderer
+brew "yamllint"           # YAML linter
+brew "git-absorb"         # auto-fixup commits
+brew "tree-sitter-cli"    # required by nvim-treesitter main branch to compile parsers
+
+# ---- Kubernetes power-user ----
+brew "kubescape"          # K8s security scanner (NSA/CIS/MITRE)
+brew "kubecolor"          # color-wraps every kubectl call
+brew "helm-docs"          # auto-generate helm chart docs
+brew "kustomize"          # K8s manifest customization
+brew "kind"               # local K8s clusters in Docker
+brew "helmfile"           # declarative helm releases
+brew "fluxcd/tap/flux"    # Flux GitOps CLI
+
+# NOTE: wl-clipboard (wl-copy/wl-paste, used by pwdc() and nvim) is installed via
+# apt in install/desktop-apps.sh so it links against the system Wayland libraries.

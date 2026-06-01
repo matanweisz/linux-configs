@@ -1,163 +1,63 @@
 #!/usr/bin/env bash
 #
-# DevOps Tools Installation
-# Kubernetes, Terraform, Cloud CLIs, Docker, and related tools
+# DevOps tools that must be NATIVE (not Homebrew):
+#   - Docker Engine (system daemon + group + log rotation)
+#   - Google Cloud SDK (apt repo + GKE auth plugin)
+# Everything else (kubectl, helm, kubectx/kubens, terraform, terragrunt, ansible,
+# awscli, k9s, argocd, stern, trivy, kustomize, flux, ...) comes from the Brewfile.
+# Sourced by bootstrap.sh (inherits log_* helpers) or runnable standalone.
 #
 
+if ! declare -F log_info >/dev/null 2>&1; then
+    set -euo pipefail
+    RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+    log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+    log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
+    log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+    log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+fi
+
+apt_clean() { sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true; }
+
 # ============================================
-# DOCKER
+# DOCKER ENGINE (system)
 # ============================================
-log_info "Installing Docker..."
+log_info "Installing Docker Engine..."
 if ! command -v docker &>/dev/null; then
-    # Add Docker's official GPG key
     sudo install -m 0755 -d /etc/apt/keyrings
     [ -f /etc/apt/keyrings/docker.asc ] && sudo rm /etc/apt/keyrings/docker.asc
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-    # Add Docker repository
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-    $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-    # Install Docker
-    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
-    sudo apt update
-    sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-    # Add user to docker group
+    $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" \
+        | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt_clean; sudo apt-get update
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     sudo usermod -aG docker "$USER"
-
-    # Configure log rotation
     echo '{"log-driver":"json-file","log-opts":{"max-size":"10m","max-file":"5"}}' | sudo tee /etc/docker/daemon.json > /dev/null
-
-    # Start Docker
-    sudo systemctl start docker
-    sudo systemctl enable docker
+    sudo systemctl enable --now docker
+    log_warn "Log out/in (or 'newgrp docker') so your user picks up the docker group."
 fi
-log_success "Docker installed"
+log_success "Docker Engine ready ($(docker --version 2>/dev/null || echo present))"
 
 # ============================================
-# KUBERNETES TOOLS
-# ============================================
-log_info "Installing kubectl..."
-if ! command -v kubectl &>/dev/null; then
-    sudo snap install kubectl --classic
-fi
-log_success "kubectl installed"
-
-log_info "Installing Helm..."
-if ! command -v helm &>/dev/null; then
-    sudo snap install helm --classic
-fi
-log_success "Helm installed"
-
-log_info "Installing OpenLens..."
-if ! command -v openlens &>/dev/null && ! dpkg -l | grep -q openlens; then
-    # Download from MuhammedKalkan/OpenLens releases
-    OPENLENS_VERSION=$(curl -s "https://api.github.com/repos/MuhammedKalkan/OpenLens/releases/latest" | grep -Po '"tag_name": "v\K[^"]*' || echo "6.5.2-366")
-    curl -fLo /tmp/openlens.deb "https://github.com/MuhammedKalkan/OpenLens/releases/download/v${OPENLENS_VERSION}/OpenLens-${OPENLENS_VERSION}.amd64.deb"
-    if [ -f /tmp/openlens.deb ] && [ -s /tmp/openlens.deb ]; then
-        sudo dpkg -i /tmp/openlens.deb || sudo apt install -f -y
-        rm -f /tmp/openlens.deb
-    else
-        log_warn "OpenLens download failed - skipping (install manually from https://github.com/MuhammedKalkan/OpenLens/releases)"
-    fi
-fi
-log_success "OpenLens installed"
-
-log_info "Installing kubectx and kubens..."
-if ! command -v kubectx &>/dev/null; then
-    sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx 2>/dev/null || true
-    sudo ln -sf /opt/kubectx/kubectx /usr/local/bin/kubectx
-    sudo ln -sf /opt/kubectx/kubens /usr/local/bin/kubens
-fi
-log_success "kubectx/kubens installed"
-
-# ============================================
-# INFRASTRUCTURE AS CODE
-# ============================================
-log_info "Installing Terraform..."
-if ! command -v terraform &>/dev/null; then
-    sudo snap install terraform --classic
-fi
-log_success "Terraform installed"
-
-log_info "Installing Terragrunt..."
-if ! command -v terragrunt &>/dev/null; then
-    TG_VERSION=$(curl -s "https://api.github.com/repos/gruntwork-io/terragrunt/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
-    curl -sLo /tmp/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_amd64"
-    sudo install /tmp/terragrunt /usr/local/bin
-    rm /tmp/terragrunt
-fi
-log_success "Terragrunt installed"
-
-log_info "Installing Ansible..."
-if ! command -v ansible &>/dev/null; then
-    sudo apt install -y ansible
-fi
-log_success "Ansible installed"
-
-# ============================================
-# AWS CLI
-# ============================================
-log_info "Installing AWS CLI..."
-if ! command -v aws &>/dev/null; then
-    sudo snap install aws-cli --classic
-fi
-log_success "AWS CLI installed"
-
-# ============================================
-# GOOGLE CLOUD SDK
+# GOOGLE CLOUD SDK (apt repo)
 # ============================================
 log_info "Installing Google Cloud SDK..."
 if ! command -v gcloud &>/dev/null; then
-    # Add Google Cloud repository
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg 2>/dev/null || true
-    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
-        sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list > /dev/null
-
-    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
-    sudo apt update
-    sudo apt install -y google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin
+    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+        | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+        | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list > /dev/null
+    apt_clean; sudo apt-get update
+    sudo apt-get install -y google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin
 fi
-log_success "Google Cloud SDK installed"
+log_success "Google Cloud SDK ready ($(gcloud --version 2>/dev/null | head -1 || echo present))"
 
 # ============================================
-# HASHICORP VAULT
+# Verify
 # ============================================
-log_info "Installing HashiCorp Vault..."
-if ! command -v vault &>/dev/null; then
-    sudo snap install vault
-fi
-log_success "Vault installed"
-
-# ============================================
-# ARGOCD CLI
-# ============================================
-log_info "Installing ArgoCD CLI..."
-if ! command -v argocd &>/dev/null; then
-    curl -sSL -o /tmp/argocd "https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64"
-    sudo install -m 555 /tmp/argocd /usr/local/bin/argocd
-    rm /tmp/argocd
-fi
-log_success "ArgoCD CLI installed"
-
-# ============================================
-# ADDITIONAL DEVOPS TOOLS
-# ============================================
-log_info "Installing additional DevOps tools..."
-
-# Trivy (container security scanner)
-if ! command -v trivy &>/dev/null; then
-    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-fi
-log_success "Trivy installed"
-
-# Lefthook (git hooks manager)
-if ! command -v lefthook &>/dev/null; then
-    sudo snap install lefthook --classic
-fi
-log_success "Lefthook installed"
-
-log_success "DevOps tools installation complete"
+log_info "Verifying native DevOps tools..."
+command -v docker &>/dev/null && log_success "  docker present" || log_warn "  docker missing"
+command -v gcloud &>/dev/null && log_success "  gcloud present" || log_warn "  gcloud missing"
+log_success "Native DevOps tools step complete (kubectl/helm/terraform/etc. come from Brewfile)"
