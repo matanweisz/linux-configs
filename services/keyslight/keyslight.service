@@ -1,0 +1,16 @@
+[Unit]
+Description=Set keyboard backlight (rogauracore) at boot
+Documentation=https://github.com/wroberts/rogauracore
+# rogauracore talks to the ASUS Aura keyboard over USB-HID; by multi-user.target
+# udev has enumerated it. Runs as root (system service) — no password at boot.
+After=multi-user.target
+
+[Service]
+Type=oneshot
+# Leading '-' : ignore a non-zero exit (the script's notify-send has no user
+# session bus at boot, so it fails harmlessly after the lights are already set).
+ExecStart=-/usr/local/sbin/keyslight.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

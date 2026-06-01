@@ -1,0 +1,13 @@
+[Unit]
+Description=Set keyboard backlight (rogauracore) after suspend/resume
+Documentation=https://github.com/wroberts/rogauracore
+# Re-apply the lights when waking from any sleep state (the keyboard controller
+# loses its color across suspend/hibernate).
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+ExecStart=-/usr/local/sbin/keyslight.sh
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
