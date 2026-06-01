@@ -1,155 +1,113 @@
 #!/usr/bin/env bash
 #
-# Desktop Applications Installation
-# GUI apps for productivity and development
+# Desktop applications (GUI). Homebrew casks are macOS-only, so GUI apps come
+# from apt/deb/snap here. Selection mirrors the user's daily set:
+#   Ghostty, VS Code, Chrome, Slack, WhatsApp, drawio, Standard Notes,
+#   Beekeeper Studio, OpenLens. (Spotify/Bitwarden intentionally skipped.)
+# Sourced by bootstrap.sh (inherits log_* helpers) or runnable standalone.
 #
 
-# ============================================
-# GOOGLE CHROME
-# ============================================
-log_info "Installing Google Chrome..."
-if ! command -v google-chrome &>/dev/null; then
-    wget -q -O /tmp/chrome.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-    sudo apt install -y /tmp/chrome.deb
-    rm /tmp/chrome.deb
+if ! declare -F log_info >/dev/null 2>&1; then
+    set -euo pipefail
+    RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+    log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+    log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
+    log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+    log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 fi
-log_success "Google Chrome installed"
+
+apt_clean() { sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true; }
 
 # ============================================
-# VISUAL STUDIO CODE
+# apt essentials (clipboard, notifications, GNOME tooling)
+# ============================================
+log_info "Installing apt essentials (wl-clipboard, xclip, notify, GNOME tools)..."
+sudo apt-get install -y wl-clipboard xclip libnotify-bin unzip \
+    gnome-tweaks gnome-shell-extension-manager dconf-editor
+log_success "apt essentials installed"
+
+# ============================================
+# GHOSTTY (maintained PPA — supports Ubuntu 24.04)
+# ============================================
+log_info "Installing Ghostty..."
+if ! command -v ghostty &>/dev/null; then
+    sudo add-apt-repository -y ppa:mkasberg/ghostty-ubuntu
+    apt_clean; sudo apt-get update
+    sudo apt-get install -y ghostty
+fi
+command -v ghostty &>/dev/null && log_success "Ghostty installed" || log_warn "Ghostty install failed"
+
+# ============================================
+# VISUAL STUDIO CODE (Microsoft repo)
 # ============================================
 log_info "Installing Visual Studio Code..."
 if ! command -v code &>/dev/null; then
     wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg
     sudo install -D -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
-    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null
-    rm /tmp/packages.microsoft.gpg
-    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
-    sudo apt update
-    sudo apt install -y code
+    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" \
+        | sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null
+    rm -f /tmp/packages.microsoft.gpg
+    apt_clean; sudo apt-get update
+    sudo apt-get install -y code
 fi
 log_success "Visual Studio Code installed"
 
-# =============================================
-# SNAP STORE
-# =============================================
-log_info "Installing Snap Store..."
-if ! command -v snap &>/dev/null; then
-    sudo snap install snap-store
+# ============================================
+# GOOGLE CHROME (.deb)
+# ============================================
+log_info "Installing Google Chrome..."
+if ! command -v google-chrome &>/dev/null; then
+    wget -q -O /tmp/chrome.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    sudo apt-get install -y /tmp/chrome.deb
+    rm -f /tmp/chrome.deb
 fi
-log_success "Snap Store installed"
+log_success "Google Chrome installed"
 
 # ============================================
-# SPOTIFY (via snap)
+# SNAP apps: Slack, WhatsApp, drawio, Standard Notes, Beekeeper Studio
 # ============================================
-log_info "Installing Spotify..."
-if ! snap list spotify &>/dev/null 2>&1; then
-    sudo snap install spotify
-fi
-log_success "Spotify installed"
+install_snap() { # name [extra-flags]
+    local name="$1"; shift || true
+    if snap list "$name" &>/dev/null 2>&1; then
+        log_success "snap:$name already installed"
+    else
+        log_info "Installing snap:$name..."
+        sudo snap install "$name" "$@" && log_success "snap:$name installed" || log_warn "snap:$name failed"
+    fi
+}
+command -v snap &>/dev/null || { log_info "Installing snapd..."; sudo apt-get install -y snapd; }
+install_snap slack
+install_snap whatsapp-desktop-client
+install_snap drawio
+install_snap standard-notes
+install_snap beekeeper-studio
 
 # ============================================
-# WHATSAPP (via snap)
+# OpenLens (Kubernetes IDE) — GitHub release .deb
 # ============================================
-log_info "Installing WhatsApp..."
-if ! snap list whatsapp-desktop-client &>/dev/null 2>&1; then
-    sudo snap install whatsapp-desktop-client
-fi
-log_success "WhatsApp installed"
-
-# ============================================
-# DRAW.IO (via snap)
-# ============================================
-log_info "Installing Draw.io..."
-if ! snap list drawio &>/dev/null 2>&1; then
-    sudo snap install drawio
-fi
-log_success "Draw.io installed"
-
-# ============================================
-# Bitwarden (via snap)
-# ============================================
-log_info "Installing Bitwarden..."
-if ! snap list bitwarden &>/dev/null 2>&1; then
-    sudo snap install bitwarden
-fi
-log_success "Bitwarden installed"
-
-# =============================================
-# Standard Notes (via snap)
-# =============================================
-log_info "Installing Standard Notes..."
-if ! snap list standard-notes &>/dev/null 2>&1; then
-    sudo snap install standard-notes
-fi
-log_success "Standard Notes installed"
-
-# =============================================
-# BeeKeeper Studio (via snap)
-# =============================================
-log_info "Installing BeeKeeper Studio..."
-if ! snap list beekeeper-studio &>/dev/null 2>&1; then
-    sudo snap install beekeeper-studio
-fi
-log_success "BeeKeeper Studio installed"
-
-# ============================================
-# ALACRITTY TERMINAL
-# ============================================
-log_info "Installing Alacritty terminal..."
-if ! command -v alacritty &>/dev/null; then
-    sudo add-apt-repository -y ppa:aslatter/ppa
-    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
-    sudo apt update
-    sudo apt install -y alacritty
-fi
-log_success "Alacritty installed"
-
-# ============================================
-# ULAUNCHER (Application Launcher)
-# ============================================
-log_info "Installing Ulauncher..."
-if ! command -v ulauncher &>/dev/null; then
-    sudo add-apt-repository -y ppa:agornostal/ulauncher
-    sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true
-    sudo apt update
-    sudo apt install -y ulauncher
-fi
-log_success "Ulauncher installed"
-
-# ============================================
-# FONTS (Nerd Fonts for terminal)
-# ============================================
-log_info "Installing Nerd Fonts..."
-FONT_DIR="$HOME/.local/share/fonts"
-mkdir -p "$FONT_DIR"
-
-# Install FiraMono Nerd Font (primary font for Alacritty)
-if [ ! -f "$FONT_DIR/FiraMonoNerdFont-Regular.otf" ]; then
-    curl -sLo /tmp/FiraMono.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraMono.zip"
-    unzip -q /tmp/FiraMono.zip -d "$FONT_DIR"
-    rm /tmp/FiraMono.zip
+log_info "Installing OpenLens..."
+if ! command -v open-lens &>/dev/null && ! dpkg -l 2>/dev/null | grep -qi openlens; then
+    url="$(curl -fsSL https://api.github.com/repos/MuhammedKalkan/OpenLens/releases/latest \
+          | jq -r '.assets[]|select(.name|test("amd64\\.deb$")).browser_download_url' | head -1)"
+    if [[ -n "$url" ]]; then
+        wget -q -O /tmp/openlens.deb "$url"
+        sudo apt-get install -y /tmp/openlens.deb && log_success "OpenLens installed" || log_warn "OpenLens install failed"
+        rm -f /tmp/openlens.deb
+    else
+        log_warn "Could not resolve OpenLens release — skipping"
+    fi
+else
+    log_success "OpenLens already installed"
 fi
 
-# Install JetBrains Mono Nerd Font (alternative font)
-if [ ! -f "$FONT_DIR/JetBrainsMonoNerdFont-Regular.ttf" ]; then
-    curl -sLo /tmp/JetBrainsMono.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
-    unzip -q /tmp/JetBrainsMono.zip -d "$FONT_DIR"
-    rm /tmp/JetBrainsMono.zip
-fi
-
-# Refresh font cache
-fc-cache -fv
-
-log_success "Nerd Fonts installed"
-
 # ============================================
-# GNOME TWEAKS (for GNOME desktop)
+# Verify
 # ============================================
-if [[ "${XDG_CURRENT_DESKTOP:-}" == *"GNOME"* ]]; then
-    log_info "Installing GNOME tools..."
-    sudo apt install -y gnome-shell gnome-tweaks gnome-shell-extension-manager dconf-editor
-    log_success "GNOME tools installed"
-fi
-
-log_success "Desktop applications installation complete"
+log_info "Verifying desktop apps..."
+for c in ghostty code google-chrome; do
+    command -v "$c" &>/dev/null && log_success "  $c present" || log_warn "  $c missing"
+done
+for s in slack whatsapp-desktop-client drawio standard-notes beekeeper-studio; do
+    snap list "$s" &>/dev/null 2>&1 && log_success "  snap:$s present" || log_warn "  snap:$s missing"
+done
+log_success "Desktop applications step complete"

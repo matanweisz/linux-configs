@@ -1,143 +1,152 @@
-# Clean, Professional Starship Prompt for DevOps (Catppuccin Theme)
+"$schema" = 'https://starship.rs/config-schema.json'
 
+# ------------------------------------------------------------------------------
+# PROMPT FORMATTING
+# ------------------------------------------------------------------------------
 format = """
-$time\
-$username$directory\
-$line_break\
-│$git_branch$git_commit$git_state$git_metrics$git_status \
-$package$nodejs$python$golang$rust$java$php$dotnet\
+[░▒▓](#a3aed2)\
+[  ](bg:#a3aed2 fg:#090c0c)\
+$username\
+[](bg:#769ff0 fg:#a3aed2)\
+$directory\
+[](fg:#769ff0 bg:#394260)\
+$git_branch\
+$git_status\
+[](fg:#394260 bg:#212736)\
 $kubernetes\
-$cmd_duration$jobs$status\
-$line_break$character
-"""
+$docker_context\
+$terraform\
+$aws\
+$gcp\
+$nodejs\
+$rust\
+$golang\
+$php\
+$python\
+[](fg:#212736 bg:#1d2230)\
+$time\
+$cmd_duration\
+[ ](fg:#1d2230)\
+\n$character"""
 
-add_newline = true
-right_format = ""
-
-# ─── TOP INFO ───────────────────────────────────────────────
-
-[time]
-format = "╭───┤ [🕐$time]($style)"
-time_format = "%H:%M"
-style = "bold #89b4fa"
+# ------------------------------------------------------------------------------
+# USERNAME MODULE
+# ------------------------------------------------------------------------------
+[username]
+show_always = true
+style_user = "bg:#a3aed2 fg:#090c0c"
+style_root = "bg:#a3aed2 fg:#090c0c bold"
+format = "[$user ]($style)"
 disabled = false
 
-# ─── USER & DIRECTORY ──────────────────────────────────────
-
-[username]
-format = " │ [$user]($style)"
-style_user = "bold #cdd6f4"
-style_root = "bold #f38ba8"
-show_always = true
-
+# ------------------------------------------------------------------------------
+# DIRECTORY MODULE
+# ------------------------------------------------------------------------------
 [directory]
-format = " │ [$path]($style)[$read_only]($read_only_style)"
-style = "bold #89dceb"
-read_only = " 🔒"
-read_only_style = "bold #f38ba8"
-truncation_length = 4
-truncate_to_repo = true
-home_symbol = "~"
+style = "fg:#e3e5e5 bg:#769ff0"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
 
-# ─── GIT ───────────────────────────────────────────────────
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = " "
+"Pictures" = " "
 
+# ------------------------------------------------------------------------------
+# GIT (Enhanced for DevOps)
+# ------------------------------------------------------------------------------
 [git_branch]
-format = " [$symbol$branch]($style) "
-symbol = " "
-style = "bold #a6e3a1"
-truncation_length = 25
-truncation_symbol = "…"
-
-[git_commit]
-style = "bold #fab387"
-format = " [$hash]($style)"
-commit_hash_length = 7
-tag_symbol = "🏷"
-only_detached = false
-
-[git_state]
-format = " [$state($progress_current/$progress_total)]($style)"
-style = "bold #f9e2af"
-
-[git_metrics]
-format = " [+${added}]($added_style) [-${deleted}]($deleted_style)"
-added_style = "bold #a6e3a1"
-deleted_style = "bold #f38ba8"
+symbol = ""
+style = "bg:#394260"
+format = '[[ $symbol $branch ](fg:#769ff0 bg:#394260)]($style)'
 
 [git_status]
-format = ' [${modified}${staged}${deleted}${renamed}${conflicted}${untracked}${stashed}]($style) [${up_to_date}${ahead_behind}]($style)'
-style = 'bold #f38ba8'
+style = "bg:#394260"
+format = '[[($all_status$ahead_behind )](fg:#769ff0 bg:#394260)]($style)'
+conflicted = " "
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?${count}"
+stashed = " "
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
 
-conflicted = ' ⚡${count}'
-ahead = ' ↑${count}'
-behind = ' ↓${count}'
-diverged = ' ⇕↑${ahead_count} ↓${behind_count}'
-untracked = ' ?${count}'
-stashed = ' ≡${count}'
-modified = ' !${count}'
-staged = ' +${count}'
-renamed = ' »${count}'
-deleted = ' ✖${count}'
-up_to_date = '✓'
-
+# ------------------------------------------------------------------------------
+# DEVOPS & INFRASTRUCTURE
+# ------------------------------------------------------------------------------
 [kubernetes]
-format = "  [K8s: $context]($style) "
-style = "italic #326CE5"
+symbol = "☸ "
 disabled = false
+style = "bg:#212736"
+format = '[[ $symbol$context( \($namespace\)) ](fg:#769ff0 bg:#212736)]($style)'
 
-# ─── LANGUAGES / ENVIRONMENTS ──────────────────────────────
+[docker_context]
+symbol = " "
+style = "bg:#212736"
+format = '[[ $symbol$context ](fg:#769ff0 bg:#212736)]($style)'
 
-[package]
-format = " [📦 $version]($style)"
-style = "bold #f9e2af"
+[terraform]
+symbol = " "
+style = "bg:#212736"
+format = '[[ $symbol$workspace ](fg:#769ff0 bg:#212736)]($style)'
 
+[aws]
+symbol = " "
+style = "bg:#212736"
+format = '[[ $symbol($profile )(\($region\) )](fg:#769ff0 bg:#212736)]($style)'
+
+[gcloud]
+symbol = " "
+style = "bg:#212736"
+format = '[[ $symbol$account(\($region\)) ](fg:#769ff0 bg:#212736)]($style)'
+
+# ------------------------------------------------------------------------------
+# LANGUAGES
+# ------------------------------------------------------------------------------
 [nodejs]
-format = " [Node $version]($style)"
-style = "bold #a6e3a1"
-
-[python]
-format = " [Py $version]($style) [$virtualenv]($virtualenv_style)"
-style = "bold #f9e2af"
-
-[golang]
-format = " [Go $version]($style)"
-style = "bold #74c7ec"
+symbol = ""
+style = "bg:#212736"
+format = '[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)'
 
 [rust]
-format = " [Rust $version]($style)"
-style = "bold #fab387"
+symbol = ""
+style = "bg:#212736"
+format = '[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)'
 
-[java]
-format = " [Java $version]($style)"
-style = "bold #f38ba8"
+[golang]
+symbol = ""
+style = "bg:#212736"
+format = '[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)'
 
 [php]
-format = " [PHP $version]($style)"
-style = "bold #cba6f7"
+symbol = ""
+style = "bg:#212736"
+format = '[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)'
 
-[dotnet]
-format = " [.NET $version]($style)"
-style = "bold #74c7ec"
+[python]
+symbol = "🐍"
+style = "bg:#212736"
+format = '[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)'
 
-# ─── SHELL STATUS ──────────────────────────────────────────
+# ------------------------------------------------------------------------------
+# UTILITY & SYSTEM
+# ------------------------------------------------------------------------------
+[time]
+disabled = false
+time_format = "%R"
+style = "bg:#1d2230"
+format = '[[  $time ](fg:#a0a9cb bg:#1d2230)]($style)'
 
 [cmd_duration]
-format = "  [⏱ $duration]($style)"
-style = "bold #f9e2af"
-min_time = 1000
-
-[jobs]
-format = " [✦ $number]($style)"
-style = "bold #cba6f7"
-
-[status]
-format = " [✖ $status]($style)"
-style = "bold #f38ba8"
-success_symbol = ""
-
-# ─── FINAL CHARACTER ───────────────────────────────────────
+min_time = 2000
+style = "bg:#1d2230"
+format = '[[ ⏱ $duration ](fg:#e0af68 bg:#1d2230)]($style)'
 
 [character]
-success_symbol = "[╰──────](bold #cdd6f4)[❯](bold #a6e3a1)"
-error_symbol = "[╰──────](bold #cdd6f4)[❯](bold #f38ba8)"
-vimcmd_symbol = "[╰─────❮](bold #cba6f7)"
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯ ✘ $status_code](bold red)"

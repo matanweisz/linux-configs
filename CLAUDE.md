@@ -4,24 +4,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-Workstation bootstrap automation for a DevOps engineer, with **two parallel stacks**:
-- **Ubuntu** (top-level): apt-based, GNOME desktop, Tiling Shell extension
-- **macOS** (`mac/` subdirectory): Homebrew-based, Raycast tiling, Tokyo Night theming
+Workstation bootstrap automation for a DevOps engineer, with **two parallel stacks**
+designed for **parity** — the Ubuntu side mirrors the macOS workflow with Linux-native tools:
+- **Ubuntu** (top-level): **Homebrew-on-Linux for CLI** + apt/deb/snap for GUI, GNOME (Wayland),
+  zsh/Zinit, Ghostty, Vicinae launcher, Tiling Shell, Tokyo Night.
+- **macOS** (`mac/` subdirectory): Homebrew-based, Raycast tiling, Tokyo Night.
 
-Both stacks install tools, restore dotfiles, and configure the desktop. They share a small set of OS-agnostic configs (e.g. `configs/btop/`).
+Both stacks install tools, restore dotfiles, and configure the desktop. They share OS-agnostic
+configs (`configs/btop/`) and the **same Neovim config** (`nvim/init.lua` ≡ `mac/nvim/init.lua`).
 
 ## Architecture
 
 ### Ubuntu side (top-level)
-**Entry point:** `bootstrap.sh` — interactive menu (1=full, 2=core, 3=devops, 4=desktop, 5=configs, 6=custom). Exports `INSTALL_*`/`RESTORE_*` flags, then sources `install/*.sh` based on those flags.
+**Entry point:** `bootstrap.sh` — interactive numbered menu; option 1 = full run, which sources
+the `install/*.sh` modules in dependency order: system-update → brew → zsh → docker/gcloud →
+desktop-apps → restore-configs → claude → launcher → gnome-setup → git-identity.
+
+**Package model (hybrid):** CLI tools come from **Homebrew** (`Brewfile`, identical names/versions
+to the Mac); GUI apps from apt/deb/snap (casks are macOS-only); Docker Engine + gcloud SDK are native (apt).
 
 **Install scripts** (`install/`):
-- `core-tools.sh` — eza, bat, fzf, lazygit, starship, gh
-- `devops-tools.sh` — Docker, kubectl, helm, OpenLens, Terraform, Terragrunt, AWS CLI, GCloud SDK, ArgoCD, Trivy
-- `desktop-apps.sh` — VS Code, Chrome, Spotify, WhatsApp, Alacritty, Ulauncher
-- `restore-configs.sh` — copies dotfiles to `~/.config/` and restores GNOME settings from `backup/`
+- `brew.sh` — Homebrew on Linux + `brew bundle --file=Brewfile` + krew plugins
+- `zsh.sh` — zsh (apt) + Zinit + chsh hint
+- `devops-tools.sh` — **only** what brew can't do: Docker Engine + gcloud SDK (apt)
+- `desktop-apps.sh` — Ghostty (PPA), VS Code, Chrome, Slack, WhatsApp, drawio, Standard Notes, Beekeeper, OpenLens
+- `launcher.sh` — Vicinae binary + GNOME companion extension + Super+Space keybind
+- `gnome-setup.sh` — gsettings tweaks (macos-defaults equivalents) + Tiling Shell + JetBrains Mono Nerd Font
+- `claude.sh` — Claude Code native install + sanitized config into `~/.claude`
+- `restore-configs.sh` — copies dotfiles (zsh/ghostty/nvim/starship/git/btop) with timestamped backups
 
-**GNOME backup:** `gnome-backup.sh` creates timestamped tarballs in `backup/` (extensions + dconf dump). Run before migrating to a new machine.
+Each `install/*.sh` is **independently runnable** (standalone log-helper fallback) and ends with a
+PASS/FAIL **verify** section. Every step is idempotent (`command -v` / list checks).
+
+**GNOME backup:** `gnome-backup.sh` creates timestamped tarballs in `backup/` (extensions + dconf dump).
+The new flow prefers the curated `install/gnome-setup.sh` over restoring an old backup.
 
 ### macOS side (`mac/`)
 **Entry point:** `mac/bootstrap.sh` — numbered menu 0–11, each option calls a function (no flag-based sourcing like the Ubuntu side). Option 11 = "Run ALL" in dependency order: homebrew → packages → configs → defaults → zinit → krew → claude → borders → safe-rm.
@@ -54,14 +70,17 @@ for f in bootstrap.sh gnome-backup.sh install/*.sh \
     bash -n "$f" && echo "OK: $f"
 done
 
-# Syntax check zsh files
-for f in mac/zsh/.zshrc mac/zsh/.zsh_aliases; do
+# Syntax check zsh files (both OSes)
+for f in zsh/.zshrc zsh/.zsh_aliases mac/zsh/.zshrc mac/zsh/.zsh_aliases; do
     zsh -n "$f" && echo "OK: $f"
 done
 
+# Validate the Ubuntu Brewfile resolves cleanly
+brew bundle check --file=Brewfile --verbose
+
 # Parse-check the nvim init.lua without executing plugins
 nvim --headless --clean \
-  -c 'lua local f, e = loadfile("mac/nvim/init.lua"); print(f and "OK" or e)' \
+  -c 'lua local f, e = loadfile("nvim/init.lua"); print(f and "OK" or e)' \
   -c 'qa!'
 ```
 
@@ -81,8 +100,9 @@ nvim --headless --clean \
 ## Adding New Tools
 
 ### Ubuntu
-1. Pick category: core CLI → `install/core-tools.sh`, DevOps → `install/devops-tools.sh`, GUI → `install/desktop-apps.sh`
-2. Follow the existing pattern: command-exists check → install → `log_success`
+1. Pick the right place: **CLI tool → add to `Brewfile`**; native daemon → `install/devops-tools.sh`;
+   GUI app → `install/desktop-apps.sh`; launcher/GNOME → `install/launcher.sh` / `install/gnome-setup.sh`.
+2. Follow the existing pattern: command-exists/list check → install → `log_success`, and extend the module's `verify` section.
 3. If the tool ships a config, drop it in the matching topic dir (`configs/`, `bash/`, etc.) and extend `install/restore-configs.sh`
 
 ### macOS

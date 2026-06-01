@@ -1,185 +1,136 @@
 #!/usr/bin/env bash
 #
-# DevOps Ubuntu Bootstrap Script
-# Automates setup of a new Ubuntu workstation for DevOps workflow
+# Ubuntu DevOps Bootstrap — Mac-parity workflow on Ubuntu/GNOME (Wayland).
 #
-# Usage: ./bootstrap.sh
+# Stack: Homebrew (CLI) + apt/deb/snap (GUI) + zsh/Zinit + Ghostty + Neovim +
+#        Starship + Vicinae launcher + Tiling Shell + sanitized Claude Code.
 #
-# Inspired by omakub (https://github.com/basecamp/omakub)
-# Customized for DevOps engineers
-
+# Usage: ./bootstrap.sh        (interactive menu; full run does steps in order)
+#
 set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Script directory (where this repo is cloned)
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export SCRIPT_DIR
 
-# Log functions
-log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_info()    { echo -e "${BLUE}[INFO]${NC} $1"; }
 log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
+export -f log_info log_success log_warn log_error 2>/dev/null || true
 
-# Error handler
-trap 'log_error "Script failed at line $LINENO. Run again to retry."' ERR
+trap 'log_error "Failed at line $LINENO. Fix the cause and re-run (steps are idempotent)."' ERR
 
-# Check Ubuntu version
 check_ubuntu() {
-    if [ ! -f /etc/os-release ]; then
-        log_error "This script is designed for Ubuntu"
-        exit 1
-    fi
-
+    [[ -f /etc/os-release ]] || { log_error "Not Ubuntu (no /etc/os-release)"; exit 1; }
+    # shellcheck disable=SC1091
     source /etc/os-release
-    if [[ "$ID" != "ubuntu" ]]; then
-        log_error "This script requires Ubuntu (detected: $ID)"
-        exit 1
-    fi
-
-    log_info "Detected: $PRETTY_NAME"
+    [[ "$ID" == "ubuntu" ]] || { log_error "Requires Ubuntu (detected: $ID)"; exit 1; }
+    log_info "Detected: $PRETTY_NAME (GNOME ${XDG_CURRENT_DESKTOP:-?}, session ${XDG_SESSION_TYPE:-?})"
 }
 
-# Show banner
-show_banner() {
+banner() {
     echo -e "${BLUE}"
     cat << 'EOF'
-    ____              ____                ____              __       __
-   / __ \___ _   __  / __ \____  _____   / __ )____  ____  / /______/ /_____ _____ ____
-  / / / / _ \ | / / / / / / __ \/ ___/  / __  / __ \/ __ \/ __/ ___/ __/ ___/ __ `/ __ \
- / /_/ /  __/ |/ / / /_/ / /_/ (__  )  / /_/ / /_/ / /_/ / /_(__  ) /_/ /  / /_/ / /_/ /
-/_____/\___/|___/  \____/ .___/____/  /_____/\____/\____/\__/____/\__/_/   \__,_/ .___/
-                       /_/                                                     /_/
+   Ubuntu DevOps Bootstrap — Mac-parity edition
+   ============================================
 EOF
     echo -e "${NC}"
-    echo "Ubuntu DevOps Workstation Bootstrap"
-    echo "===================================="
-    echo ""
 }
 
-# Main menu using gum (if available) or fallback to basic selection
-show_menu() {
-    echo ""
-    log_info "What would you like to install?"
-    echo ""
-    echo "  1) Full installation (recommended for new machines)"
-    echo "  2) Core CLI tools only"
-    echo "  3) DevOps tools only (K8s, Terraform, AWS, GCloud)"
-    echo "  4) Desktop apps only (VS Code, Chrome, etc.)"
-    echo "  5) Restore configs only (dotfiles, GNOME settings)"
-    echo "  6) Custom selection"
-    echo ""
-    read -p "Enter choice [1-6]: " choice
+system_update() {
+    log_info "Cleaning apt cache + updating system..."
+    sudo rm -rf /var/cache/apt/archives/lock /var/lib/dpkg/lock* /var/cache/apt/*.bin 2>/dev/null || true
+    sudo dpkg --configure -a 2>/dev/null || true
+    sudo apt-get update -y
+    sudo apt-get upgrade -y
+    sudo apt-get install -y curl git wget unzip software-properties-common \
+        apt-transport-https ca-certificates gnupg jq
+    log_success "System updated"
+}
 
-    case $choice in
-        1) INSTALL_CORE=true; INSTALL_DEVOPS=true; INSTALL_DESKTOP=true; RESTORE_CONFIGS=true ;;
-        2) INSTALL_CORE=true; INSTALL_DEVOPS=false; INSTALL_DESKTOP=false; RESTORE_CONFIGS=false ;;
-        3) INSTALL_CORE=false; INSTALL_DEVOPS=true; INSTALL_DESKTOP=false; RESTORE_CONFIGS=false ;;
-        4) INSTALL_CORE=false; INSTALL_DEVOPS=false; INSTALL_DESKTOP=true; RESTORE_CONFIGS=false ;;
-        5) INSTALL_CORE=false; INSTALL_DEVOPS=false; INSTALL_DESKTOP=false; RESTORE_CONFIGS=true ;;
-        6) custom_selection ;;
-        *) log_error "Invalid choice"; exit 1 ;;
+setup_git() {
+    log_info "Git identity"
+    local name email
+    name="$(git config --global user.name 2>/dev/null || true)"
+    email="$(git config --global user.email 2>/dev/null || true)"
+    if [[ -z "$name" ]]; then read -rp "  Git name: " name; [[ -n "$name" ]] && git config --global user.name "$name"; else log_info "  name already set: $name"; fi
+    if [[ -z "$email" ]]; then read -rp "  Git email: " email; [[ -n "$email" ]] && git config --global user.email "$email"; else log_info "  email already set: $email"; fi
+    log_success "Git identity configured"
+}
+
+# --- module wrappers (each sources an install/ script) ---
+run_brew()    { log_info  "== Homebrew + CLI tools =="; source "$SCRIPT_DIR/install/brew.sh"; }
+run_zsh()     { log_info  "== Zsh + Zinit =="; source "$SCRIPT_DIR/install/zsh.sh"; }
+run_devops()  { log_info  "== Docker + gcloud (native) =="; source "$SCRIPT_DIR/install/devops-tools.sh"; }
+run_desktop() { log_info  "== Desktop apps + Ghostty =="; source "$SCRIPT_DIR/install/desktop-apps.sh"; }
+run_restore() { log_info  "== Restore configs =="; source "$SCRIPT_DIR/install/restore-configs.sh"; }
+run_claude()  { log_info  "== Claude Code =="; source "$SCRIPT_DIR/install/claude.sh"; }
+run_launcher(){ log_info  "== Vicinae launcher =="; source "$SCRIPT_DIR/install/launcher.sh"; }
+run_gnome()   { log_info  "== GNOME tweaks + Tiling Shell + fonts =="; source "$SCRIPT_DIR/install/gnome-setup.sh"; }
+
+run_all() {
+    system_update
+    run_brew
+    run_zsh
+    run_devops
+    run_desktop
+    run_restore
+    run_claude
+    run_launcher
+    run_gnome
+    setup_git
+    final_notes
+}
+
+final_notes() {
+    echo ""
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}  Bootstrap complete${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo ""
+    echo "Manual / interactive steps remaining:"
+    echo "  1. Make zsh your shell:   chsh -s \"\$(command -v zsh)\"   (then log out/in)"
+    echo "  2. Log out/in once so: Homebrew PATH, docker group, and the"
+    echo "     Vicinae + Tiling Shell GNOME extensions all activate (Wayland)."
+    echo "  3. Authenticate:  gh auth login   |   aws configure   |   gcloud init"
+    echo "  4. SSH key:       ssh-keygen -t ed25519 -f ~/.ssh/github_ed25519"
+    echo "  5. Open Ghostty; run 'nvim' once to let lazy.nvim install plugins."
+    echo "  6. Launcher: press Super+Space for Vicinae. Tiling: Super+arrows."
+    echo "  7. Claude Code: 'claude' (standard Anthropic login — no internal router)."
+}
+
+menu() {
+    echo ""
+    echo "  1)  Full setup (everything, in order)"
+    echo "  2)  Homebrew + CLI tools (Brewfile + krew)"
+    echo "  3)  Zsh + Zinit"
+    echo "  4)  Docker + gcloud (native DevOps)"
+    echo "  5)  Desktop apps + Ghostty"
+    echo "  6)  Restore configs (dotfiles)"
+    echo "  7)  Claude Code (sanitized)"
+    echo "  8)  Vicinae launcher"
+    echo "  9)  GNOME tweaks + Tiling Shell + fonts"
+    echo "  10) Git identity"
+    echo "  0)  Exit"
+    echo ""
+    read -rp "Choose [0-10]: " choice
+    case "$choice" in
+        1)  run_all ;;
+        2)  system_update; run_brew ;;
+        3)  run_zsh ;;
+        4)  system_update; run_devops ;;
+        5)  run_desktop ;;
+        6)  run_restore ;;
+        7)  run_claude ;;
+        8)  run_launcher ;;
+        9)  run_gnome ;;
+        10) setup_git ;;
+        0)  exit 0 ;;
+        *)  log_error "Invalid option"; exit 1 ;;
     esac
 }
 
-custom_selection() {
-    echo ""
-    read -p "Install core CLI tools? (y/n): " ans; [[ "$ans" =~ ^[Yy] ]] && INSTALL_CORE=true || INSTALL_CORE=false
-    read -p "Install DevOps tools? (y/n): " ans; [[ "$ans" =~ ^[Yy] ]] && INSTALL_DEVOPS=true || INSTALL_DEVOPS=false
-    read -p "Install desktop apps? (y/n): " ans; [[ "$ans" =~ ^[Yy] ]] && INSTALL_DESKTOP=true || INSTALL_DESKTOP=false
-    read -p "Restore configs and GNOME settings? (y/n): " ans; [[ "$ans" =~ ^[Yy] ]] && RESTORE_CONFIGS=true || RESTORE_CONFIGS=false
-}
-
-# Run installation
-run_install() {
-    # Clean apt cache to avoid corruption issues
-    log_info "Cleaning apt cache..."
-    sudo rm -rf /var/cache/apt/archives/lock /var/lib/dpkg/lock* /var/cache/apt/*.bin 2>/dev/null || true
-    sudo dpkg --configure -a 2>/dev/null || true
-
-    # Always update system first
-    log_info "Updating system packages..."
-    sudo apt update -y
-    sudo apt upgrade -y
-    sudo apt install -y curl git wget unzip software-properties-common apt-transport-https ca-certificates gnupg
-
-    # Core CLI tools
-    if [[ "$INSTALL_CORE" == "true" ]]; then
-        log_info "Installing core CLI tools..."
-        source "$SCRIPT_DIR/install/core-tools.sh"
-    fi
-
-    # DevOps tools
-    if [[ "$INSTALL_DEVOPS" == "true" ]]; then
-        log_info "Installing DevOps tools..."
-        source "$SCRIPT_DIR/install/devops-tools.sh"
-    fi
-
-    # Desktop apps
-    if [[ "$INSTALL_DESKTOP" == "true" ]]; then
-        log_info "Installing desktop applications..."
-        source "$SCRIPT_DIR/install/desktop-apps.sh"
-    fi
-
-    # Restore configs
-    if [[ "$RESTORE_CONFIGS" == "true" ]]; then
-        log_info "Restoring configurations..."
-        source "$SCRIPT_DIR/install/restore-configs.sh"
-    fi
-}
-
-# Git configuration prompt
-setup_git() {
-    echo ""
-    log_info "Git Configuration"
-
-    current_name=$(git config --global user.name 2>/dev/null || echo "")
-    current_email=$(git config --global user.email 2>/dev/null || echo "")
-
-    if [[ -z "$current_name" ]]; then
-        read -p "Enter your Git name: " git_name
-        git config --global user.name "$git_name"
-    else
-        log_info "Git name already set: $current_name"
-    fi
-
-    if [[ -z "$current_email" ]]; then
-        read -p "Enter your Git email: " git_email
-        git config --global user.email "$git_email"
-    else
-        log_info "Git email already set: $current_email"
-    fi
-}
-
-# Final message
-show_complete() {
-    echo ""
-    echo -e "${GREEN}========================================${NC}"
-    echo -e "${GREEN}  Installation Complete!${NC}"
-    echo -e "${GREEN}========================================${NC}"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Log out and back in (for Docker group membership)"
-    echo "  2. Run 'ssh-keygen' and add key to GitHub if needed"
-    echo "  3. Configure AWS CLI: aws configure"
-    echo "  4. Configure GCloud: gcloud init"
-    echo ""
-    log_info "Reboot recommended for all changes to take effect"
-}
-
-# Main execution
-main() {
-    show_banner
-    check_ubuntu
-    show_menu
-    run_install
-    setup_git
-    show_complete
-}
-
-main "$@"
+banner
+check_ubuntu
+menu
