@@ -41,6 +41,8 @@ dotfiles) need no sudo.
 linux-configs/
 ├── bootstrap.sh              # entry point — drives the modules below
 ├── Brewfile                  # CLI tools (Homebrew on Linux)
+├── .pre-commit-config.yaml   # gitleaks secret scanning
+├── HANDBACK.md               # machine hand-back checklist (rotate/export/sign-out)
 ├── install/
 │   ├── brew.sh               # Homebrew + brew bundle + krew
 │   ├── zsh.sh                # zsh + Zinit (+ chsh hint)
@@ -71,12 +73,26 @@ linux-configs/
 4. Run `nvim` once so lazy.nvim installs plugins.
 5. Press **Super+Space** for Vicinae; **Super+arrows** to tile.
 
+## Secret scanning
+
+This repo tracks real dotfiles, so `.pre-commit-config.yaml` runs the `gitleaks`
+hook on every commit (`gitleaks` is in both Brewfiles). Activate it once per clone:
+
+```bash
+pre-commit install
+gitleaks detect --no-git   # working tree
+gitleaks detect            # full history
+```
+
 ## Before moving to a new machine
 
 ```bash
 ./gnome-backup.sh
 git add -A && git commit -m "Pre-migration backup" && git push
 ```
+
+Handing a machine back rather than migrating? Work through **`HANDBACK.md`** —
+credentials to rotate, local-only state to export, sessions to sign out of.
 
 ## Key aliases
 

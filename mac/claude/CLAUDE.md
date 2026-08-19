@@ -18,7 +18,18 @@
 - **Shell:** zsh on macOS, in **Ghostty** terminal. Truecolor + Nerd Font + OSC 8 supported.
 - **Default tools (prefer over standard ones):** `eza` over `ls`, `bat` over `cat`, `rg` over `grep`, `fd` over `find`, `gh` for GitHub ops, `kubectx`/`kubens` for k8s context, `aws-vault` for AWS creds.
 - **Editor:** preferred is whatever opens via `$EDITOR`. Don't assume vim.
-- **Internal git host:** `git.zoominfo.com`. Use `gh --hostname git.zoominfo.com` if calling `gh`.
+- **Internal git host:** `git.zoominfo.com` — **do NOT use `gh`** (token unused); plain `git` only. Open PRs via the GHE compare URL `https://git.zoominfo.com/<org>/<repo>/compare/master...<branch>?expand=1`. Push access is **per-repo** (some Terraform-org repos 403, others accept) — confirm with a real `git push`.
+- **GCP PAM write access is time-boxed** — perms like `bigquery.datasets.update`/`storage.buckets.update` lapse after days; re-request via Privileged Access Manager. Verify write perms read-only via the resourcemanager REST `:testIamPermissions` (`curl … cloudresourcemanager.googleapis.com/v1/projects/<p>:testIamPermissions`); `gcloud projects test-iam-permissions` does NOT exist.
+- **Bigtable instance labels:** no gcloud flag — use Bigtable Admin API `PATCH .../instances/<i>?updateMask=labels` with the full merged label set (replace semantics).
+- **`terraform fmt <dir>` reformats every file in the dir** (pollutes scoped PRs) — fmt only the specific files you edited.
+- **cwd persists across Bash tool calls in this harness.** A `cd <subdir>` in one Bash call carries into the next. When running scripts via relative paths (`python3 research/foo.py`), always prefix with an absolute `cd` (`cd /Users/.../proj && python3 research/foo.py`) — otherwise `can't open file` errors hit when the previous turn left cwd somewhere unexpected.
+
+## Claude Code plugins (cross-project)
+
+- **playwright** MCP — functional browser **E2E via accessibility snapshots**; prefer `browser_snapshot` (ref-based) over screenshots/coordinates; a persistent profile carries auth across runs. Reach for it to drive/verify real user flows against a running app.
+- **chrome-devtools-mcp** — performance & diagnostics: LCP / Core-Web-Vitals traces (`performance_start_trace` + `performance_analyze_insight`), `lighthouse_audit`, network waterfall, heap snapshots, network/CPU `emulate`. Audit a **production** build, not a dev server. (These are local browser traces — unrelated to the Datadog `query_metrics` ISO-time gotcha below.)
+- **superpowers** — composable process disciplines: `systematic-debugging` (4-phase root-cause before fixes), `verification-before-completion` (evidence before claiming done), `brainstorming` (spec-first), `dispatching-parallel-agents`, `using-git-worktrees`. Use the subset that *adds to* an existing workflow rather than duplicating it.
+- **Decision rule:** DevTools to inspect/measure/diagnose · Playwright to drive/automate · superpowers for process rigor.
 
 ## My tech stack
 
@@ -27,7 +38,7 @@
 - **Data:** MongoDB Atlas (we own `tf-atlas-mongodb-module`), Confluent Kafka, BigQuery.
 - **API gateway:** Apigee X (AI Gateway: `aigateway.apigee.*.zi-int.com` etc).
 - **IaC:** Terraform via **env0** (Terraform Cloud equivalent SaaS). All workspaces under GF naming.
-- **Observability:** Datadog (APM, logs, RUM, monitors) — accessible via the `codex` MCP server.
+- **Observability:** Datadog (APM, logs, RUM, monitors) — accessible via the `codex` MCP server. **Gotcha:** `mcp__datadog-mcp__query_metrics` rejects relative times (`now`, `now-15m`) AND bare epoch seconds with "Invalid isoformat string" — use full ISO-8601 (`2026-05-24T12:00:00Z`). Other Datadog MCP tools (`search_logs`, `apm_search_spans`) accept `now-1h` style; only `query_metrics` is strict.
 - **CI:** env0 for IaC; GitHub Actions / Drone for service code.
 - **Secrets:** Vault and 1Password (never paste secrets in chat or files).
 
@@ -62,6 +73,7 @@
 - **Generating Terraform:** `terraform_list_modules` → `terraform_module_generation <name>` → write HCL → `terraform_local_validate_and_plan_instructions <dir>` → review. Never skip.
 - **Creating env0 environments:** validate (`tasker_validate_env0_environment`) → show diff → wait for OK → create (`tasker_create_env0_environment`). Never skip validate.
 - **AWS tagging:** dry-run (`tasker_apply_aws_tags` with `dryRun: true`) → review → apply.
+- **gcloud auth tokens expire silently mid-session.** `kubectl` against GKE returns "cannot prompt during non-interactive execution" / "Reauthentication failed" when this happens. Recovery: ask me to run `! gcloud auth login` interactively. Background `kubectl` loops will fail mid-flight; check auth first when you see weird credential errors.
 
 ## Critical never-do rules
 
@@ -80,6 +92,7 @@
 - **Plan mode** for any change touching >2 files or any infra mutation.
 - **Small PRs** preferred over big ones, even at the cost of more PRs.
 - **Validate before commit** (`terraform validate`, `helm lint`, `shellcheck`, etc.).
+- **Git workflow:** see `~/.claude/rules/git-workflow.md`. TL;DR: branch from a clean master named after the ticket key, commit with `<TICKET>: <imperative summary>`, push, open PR; never push to master, never force-push without OK, let pre-commit hooks (`tf_fmt`, etc.) apply formatting.
 - Prefer `git switch` / `git restore` over `git checkout`.
 - Subagents:
   - `terraform-reviewer` — for plan reviews
@@ -105,6 +118,7 @@ You can mention these casually when relevant:
 - **Static NAT removal** on `yazi-*-war-games` PRD subnets (IEDO-94002).
 - **MongoDB Atlas v7/v8 EOL upgrades** as embedded DevOps for product teams.
 - Terraform drift on `tfc-gf-customer-facing-analytics-ns-gcp` and `tfc-gf-mosi-temporal-workers-ns-gcp`.
+- **Non-Platform fleet enrollment** (IEDO-92809). Non-Platform = the SVPC under `gcp-foundation/restricted/non-platform-host-projects` (folder `863893899620`), DNS `*.np-zi-int.com`, TF SAs `tf-non-platform-<tier>@zoominfo-depmgr-pc-prd.iam.gserviceaccount.com`. Only two GKE clusters live there: `requesty-primary` (`yazi-<tier>-happy-donkey`) and `epe-apps-primary` (`yazi-<tier>-eager-eel`). Epic owner: Gleb Brezhnev. Distinct from the *legacy/pre-GF* cluster track (epic IEDO-93666) which Gleb owns separately.
 
 ## High-signal references (link, don't load)
 
@@ -119,3 +133,9 @@ You can mention these casually when relevant:
 - Repo: `git.zoominfo.com/Terraform/opa-iac-policies`
 
 When in doubt about company-specific terms, processes, or systems, prefer the `atlassian:search-company-knowledge` skill (it searches Confluence + Jira) over guessing or web search.
+# graphify
+- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
+When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
+# app-review
+- **app-review** (`~/.claude/skills/app-review/SKILL.md`) - multi-persona critical app testing + findings report + improvement roadmap. Trigger: `/app-review`
+When the user types `/app-review`, invoke the Skill tool with `skill: "app-review"` before doing anything else.

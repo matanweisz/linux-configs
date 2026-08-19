@@ -52,6 +52,7 @@ alias gc='git commit -m'
 alias ga='git add'
 alias gpu='git pull'
 alias gsw='git switch'
+alias gsm='git switch main'
 alias gcl='git clone'
 alias glog='git log --oneline --graph --all --decorate'
 
@@ -62,6 +63,10 @@ alias tp='terraform plan'
 alias ta='terraform apply -auto-approve'
 alias td='terraform destroy'
 alias tg='terragrunt'
+
+# ---- GCP ----
+alias gcp='gcloud'
+alias gal='gcloud auth login'
 
 # ---- Kubernetes ----
 alias k='kubectl'

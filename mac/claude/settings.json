@@ -1,7 +1,7 @@
 {
   "cleanupPeriodDays": 30,
   "env": {
-    "ANTHROPIC_BASE_URL": "https://router.requesty-primary.prd.np-zi-int.com/",
+    "ANTHROPIC_BASE_URL": "REPLACE_ME_BASE_URL",
     "ANTHROPIC_MODEL": "policy/zoominfo-general",
     "ANTHROPIC_AUTH_TOKEN": "REPLACE_ME_BEFORE_USE",
     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "anthropic/claude-haiku-4-5",
@@ -10,6 +10,7 @@
     "MCP_TIMEOUT": "30000",
     "MCP_TOOL_TIMEOUT": "60000"
   },
+  "model": "opus[1m]",
   "permissions": {
     "allow": [
       "Bash(git status:*)",
@@ -474,9 +475,21 @@
     "security-guidance@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "slack@claude-plugins-official": true,
-    "atlassian@claude-plugins-official": true
+    "atlassian@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "vercel@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
   },
   "forceLoginMethod": "console",
   "outputStyle": "default",
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "skipDangerousModePermissionPrompt": true,
+  "mcpServers": {}
 }

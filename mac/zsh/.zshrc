@@ -92,3 +92,15 @@ if [[ -d "$HOME/google-cloud-sdk" ]]; then
     source "$HOME/google-cloud-sdk/path.zsh.inc"
     source "$HOME/google-cloud-sdk/completion.zsh.inc"
 fi
+
+# ---- Rancher Desktop (nerdctl/docker/kubectl shims) ----
+[[ -d "$HOME/.rd/bin" ]] && export PATH="$HOME/.rd/bin:$PATH"
+
+# ---- Android SDK + JDK (Capacitor/Android dev) ----
+if [[ -d "$HOME/Library/Android/sdk" ]]; then
+    export ANDROID_HOME="$HOME/Library/Android/sdk"
+    export ANDROID_SDK_ROOT="$ANDROID_HOME"
+    export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator"
+fi
+[[ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]] \
+    && export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
