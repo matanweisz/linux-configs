@@ -10,7 +10,7 @@
 ## My environment
 
 - **OS:** macOS. **Shell:** zsh in **Ghostty** (truecolor + Nerd Font).
-- **Home:** `/Users/matan.weisz`. Window tiling via **Raycast**; `borders` draws the
+- **Home:** `$HOME` (`~`). Window tiling via **Raycast**; `borders` draws the
   active-window outline.
 - **Default tools (prefer over the classics):** `eza`>`ls`, `bat`>`cat`, `rg`>`grep`,
   `fd`>`find`, `gh` for GitHub, `kubectx`/`kubens` for k8s context, `lazygit`/`lazydocker`

@@ -11,7 +11,15 @@ designed for **parity** — the Ubuntu side mirrors the macOS workflow with Linu
 - **macOS** (`mac/` subdirectory): Homebrew-based, Raycast tiling, Tokyo Night.
 
 Both stacks install tools, restore dotfiles, and configure the desktop. They share OS-agnostic
-configs (`configs/btop/`) and the **same Neovim config** (`nvim/init.lua` ≡ `mac/nvim/init.lua`).
+configs (`configs/btop/`, `configs/starship.toml`), the **same Neovim config**
+(`nvim/init.lua` and `mac/nvim/init.lua` differ only in a header comment), and **one skills
+directory** — `mac/claude/skills/` is the single source for both OSes.
+
+**Repo invariant — no employer-specific content.** Every tracked config, doc, and script must
+stay generic: no company hostnames, internal URLs, org/repo names, ticket keys, project or
+service names, or personal-employer context. The repo was fully sanitized; keep it that way.
+Before any commit: run `gitleaks detect --no-git` (the pre-commit hook does this too) and
+grep the diff for company-specific strings.
 
 ## Architecture
 
@@ -24,13 +32,16 @@ desktop-apps → restore-configs → claude → launcher → gnome-setup → git
 to the Mac); GUI apps from apt/deb/snap (casks are macOS-only); Docker Engine + gcloud SDK are native (apt).
 
 **Install scripts** (`install/`):
-- `brew.sh` — Homebrew on Linux + `brew bundle --file=Brewfile` + krew plugins
+- `brew.sh` — Homebrew on Linux + `brew trust --tap fluxcd/tap` + `brew bundle --file=Brewfile` + krew plugins
 - `zsh.sh` — zsh (apt) + Zinit + chsh hint
 - `devops-tools.sh` — **only** what brew can't do: Docker Engine + gcloud SDK (apt)
 - `desktop-apps.sh` — Ghostty (PPA), VS Code, Chrome, Slack, WhatsApp, drawio, Standard Notes, Beekeeper, OpenLens
 - `launcher.sh` — Vicinae binary + GNOME companion extension + Super+Space keybind
 - `gnome-setup.sh` — gsettings tweaks (macos-defaults equivalents) + Tiling Shell + JetBrains Mono Nerd Font
-- `claude.sh` — Claude Code native install + sanitized config into `~/.claude`
+- `claude.sh` — Claude Code native install + sanitized config into `~/.claude`. Copies
+  `claude/{CLAUDE.md,statusline.sh,settings.json}` and `agents commands hooks output-styles rules`,
+  then copies **`mac/claude/skills/`** into `~/.claude/skills` — skills are shared, not duplicated
+  under `claude/`
 - `restore-configs.sh` — copies dotfiles (zsh/ghostty/nvim/starship/git/btop) with timestamped backups
 
 Each `install/*.sh` is **independently runnable** (standalone log-helper fallback) and ends with a
@@ -42,13 +53,32 @@ The new flow prefers the curated `install/gnome-setup.sh` over restoring an old 
 ### macOS side (`mac/`)
 **Entry point:** `mac/bootstrap.sh` — numbered menu 0–12, each option calls a function (no flag-based sourcing like the Ubuntu side). Option 12 = "Run ALL" (steps 1–10) in dependency order: homebrew → packages → configs → defaults → zinit → krew → claude → borders → safe-rm → gcloud. Option 11 (cleanup orphaned packages) is deliberately excluded from Run ALL — it is opt-in and destructive.
 
-**Tool installation:** declarative via `mac/Brewfile` (`brew bundle`). No per-category install scripts — everything is one Brewfile.
+**Tool installation:** declarative via `mac/Brewfile` (`brew bundle`). No per-category install scripts — everything is one Brewfile. `install_packages()` first uninstalls `docker-desktop` if present (Rancher's cask `conflicts_with` it), then runs `brew trust --tap` for `felixkratz/formulae` and `fluxcd/tap` — recent brew refuses to load third-party tap formulae until the tap is trusted (`|| true` keeps older brew working).
 
 **Config layout:** topic dirs (`mac/zsh/`, `mac/nvim/`, `mac/ghostty/`, `mac/aerospace/`, `mac/alttab/`, `mac/raycast/`, `mac/claude/`, `mac/configs/{borders,tmux,gh,atuin}/`). `restore_configs()` copies (not symlinks) to `~/.config/` and `~`. `mac/alttab/` and `mac/raycast/` are `defaults import` plists, not file copies — the import is skipped while the app is running.
 
-**Claude Code config:** `mac/claude/` restores to `~/.claude/` — `settings.json` + `settings.personal.json` + `statusline.sh` by direct `cp`, then `agents commands hooks output-styles rules skills` via the `for sub in …` loop in `restore_configs()`. `plugins.md` and `RESTORE-NOTES.md` are docs and must NOT be copied into `~/.claude`. Secrets are scrubbed in-repo — no auth tokens are tracked and every `mcpServers` block is emptied. See `mac/claude/RESTORE-NOTES.md`.
+**Claude Code config:** `restore_configs()` loops over **two** profile dirs — `~/.claude` (default) and `~/.claude-personal` (selected by the `claude-personal` alias via `CLAUDE_CONFIG_DIR`) — copying `CLAUDE.md`, `statusline.sh`, and `agents commands hooks output-styles rules skills` into each. The three settings files are copied afterwards, one per target: `settings.json` → `~/.claude/settings.json`, `settings.personal.json` → `~/.claude/settings.personal.json`, `settings.claude-personal.json` → `~/.claude-personal/settings.json`. `plugins.md` and `RESTORE-NOTES.md` are docs and must NOT be copied into either profile. Secrets are scrubbed in-repo — no auth tokens are tracked and every `mcpServers` block is emptied. See `mac/claude/RESTORE-NOTES.md`.
 
 **Cross-platform configs:** `mac/bootstrap.sh` reads `${SCRIPT_DIR}/../configs/btop/` from the top-level `configs/` dir — that's the single source of truth for the btop theme on both OSes.
+
+## Updating the backup (repo ← live machine)
+
+Restores **copy** files, so live edits never flow back on their own. The full refresh
+workflow — live-path → repo-path table for both OSes, Claude Code profile map, Raycast /
+AltTab plist re-export one-liners, Brewfile-dump caveats, `defaults read` drift checks —
+lives in **`README.md` → "Updating the backup"**. Follow it; don't reinvent it here.
+
+Non-negotiables when refreshing: empty every `mcpServers` block, `gitleaks detect --no-git`
+before committing, and commit on a branch + PR (never straight to `main`).
+
+## Where the docs live
+
+- `README.md` — entry point: quick-starts for both OSes, repo layout, backup-refresh workflow
+- `mac/README.md` — macOS detail: tool tables, plugin lists, keybindings, aliases, safe-`rm`
+- `HANDBACK.md` — machine hand-back: rotate, export, sign out, restore-on-next-machine
+- `mac/claude/RESTORE-NOTES.md` — Claude Code profile/file map + what is scrubbed
+- `mac/claude/plugins.md` — marketplaces + `enabledPlugins` lists (plugin code is not tracked)
+- `mac/raycast/README.md`, `mac/alttab/README.md` — plist export/import + what the plist can't carry
 
 ## Key Commands
 

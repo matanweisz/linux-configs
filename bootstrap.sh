@@ -7,7 +7,7 @@
 #
 # Usage: ./bootstrap.sh        (interactive menu; full run does steps in order)
 #
-set -euo pipefail
+set -Eeuo pipefail
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -118,9 +118,9 @@ menu() {
     case "$choice" in
         1)  run_all ;;
         2)  system_update; run_brew ;;
-        3)  run_zsh ;;
+        3)  system_update; run_zsh ;;
         4)  system_update; run_devops ;;
-        5)  run_desktop ;;
+        5)  system_update; run_desktop ;;
         6)  run_restore ;;
         7)  run_claude ;;
         8)  run_launcher ;;

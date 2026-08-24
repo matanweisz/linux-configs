@@ -171,7 +171,8 @@ command -v kubecolor &>/dev/null && alias kubectl='kubecolor'
 
 # ---- Safe rm ----
 # Moves files to ~/.local/share/trash/<timestamp>/ instead of deleting.
-# Use \rm or /bin/rm to bypass and force a real delete.
+# Use `command rm` or /bin/rm to bypass and force a real delete.
+# (a leading backslash only bypasses aliases, and rm here is a function).
 rm() {
     if [[ $# -eq 0 ]]; then
         echo "rm: missing operand" >&2
@@ -211,14 +212,14 @@ rm() {
 # Restore most recently trashed item back to the current dir.
 unrm() {
     local trash_root="$HOME/.local/share/trash"
-    local latest; latest="$(ls -1t "$trash_root" 2>/dev/null | head -1)"
+    local latest; latest="$(command ls -1t "$trash_root" 2>/dev/null | head -1)"
     if [[ -z "$latest" ]]; then
         echo "unrm: trash is empty" >&2
         return 1
     fi
     if [[ $# -eq 0 ]]; then
         echo "Latest trash batch: $latest"
-        ls -lh "$trash_root/$latest"
+        command ls -lh "$trash_root/$latest"
         echo "Usage: unrm <name>   (restores from $latest)"
         return 0
     fi

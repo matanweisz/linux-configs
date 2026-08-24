@@ -119,10 +119,10 @@ install_tiling_shell() {
     log_info "Installing Tiling Shell..."
     local url tmp
     # Pick the current-GNOME asset (the bare uuid zip), not the legacy GNOME.42-44 one.
-    url="$(curl -fsSL https://api.github.com/repos/domferr/tilingshell/releases/latest \
-      | jq -r '.assets[]|select(.name|test("^tilingshell@ferrarodomenico.com\\.zip$")).browser_download_url' | head -1)"
-    if [[ -z "$url" ]]; then
-      log_warn "could not resolve Tiling Shell release"
+    url="$(curl -fsSL https://api.github.com/repos/domferr/tilingshell/releases/latest 2>/dev/null \
+      | jq -r '.assets[]|select(.name|test("^tilingshell@ferrarodomenico.com\\.zip$")).browser_download_url' 2>/dev/null | head -1 || true)"
+    if [[ -z "$url" || "$url" == "null" ]]; then
+      log_warn "Tiling Shell install skipped (GitHub API unavailable)"
       return 0
     fi
     tmp="$(mktemp -d)"
@@ -145,10 +145,10 @@ install_nerd_font() {
   log_info "Installing JetBrains Mono Nerd Font..."
   mkdir -p "$fontdir"
   local url tmp
-  url="$(curl -fsSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest \
-    | jq -r '.assets[]|select(.name=="JetBrainsMono.tar.xz").browser_download_url' | head -1)"
-  if [[ -z "$url" ]]; then
-    log_warn "could not resolve Nerd Font release"
+  url="$(curl -fsSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest 2>/dev/null \
+    | jq -r '.assets[]|select(.name=="JetBrainsMono.tar.xz").browser_download_url' 2>/dev/null | head -1 || true)"
+  if [[ -z "$url" || "$url" == "null" ]]; then
+    log_warn "JetBrains Mono Nerd Font install skipped (GitHub API unavailable)"
     return 0
   fi
   tmp="$(mktemp -d)"

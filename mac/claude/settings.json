@@ -191,8 +191,6 @@
       "Bash(doas:*)",
       "Read(~/.aws/credentials)",
       "Read(~/.aws/config)",
-      "Read(/Users/matan.weisz/.aws/credentials)",
-      "Read(/Users/matan.weisz/.aws/config)",
       "Read(**/.aws/credentials)",
       "Read(**/*.pem)",
       "Read(**/*.key)",

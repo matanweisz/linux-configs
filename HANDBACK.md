@@ -71,10 +71,14 @@ git clone git@github.com:matanweisz/linux-configs.git ~/git/linux-configs
 cd ~/git/linux-configs/mac && ./bootstrap.sh   # option 12 = run everything
 ```
 
+Going to Ubuntu instead? `cd ~/git/linux-configs && ./bootstrap.sh` — option 1 is the
+full run. Same dotfiles, Linux-native tooling. See the repo `README.md`.
+
 Then the manual pieces bootstrap can't do:
 
-- **Claude Code** — `mac/claude/RESTORE-NOTES.md`. Re-add any `mcpServers` blocks
-  (scrubbed on purpose). Plugins/marketplaces: `mac/claude/plugins.md`.
+- **Claude Code** — `mac/claude/RESTORE-NOTES.md`. Both profiles (`~/.claude` and
+  `~/.claude-personal`) and `skills/` restore automatically; re-add any `mcpServers`
+  blocks by hand (scrubbed on purpose). Plugins/marketplaces: `mac/claude/plugins.md`.
 - **Raycast** — `mac/raycast/README.md` (the plist restores; snippets/quicklinks need a `.rayconfig` export).
 - **AltTab** — `mac/alttab/README.md`.
 - **SSH** — bootstrap writes a `github.com` block. Add a block per additional git

@@ -45,13 +45,13 @@ From `claude-plugins-official`:
 - `supabase`
 - `vercel`
 - `expo`
-- `humanizer`
 
 From third-party marketplaces:
 
 - `ponytail@ponytail`
 - `kubernetes-skill@kubernetes-skill`
 - `ui-ux-pro-max@ui-ux-pro-max-skill`
+- `humanizer@humanizer`
 
 Tracked in `mac/claude/settings.claude-personal.json` → `enabledPlugins`. This is
 the full, current set — treat it as the source of truth.

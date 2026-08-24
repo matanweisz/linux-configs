@@ -93,6 +93,7 @@ brew "fluxcd/tap/flux"    # Flux GitOps CLI
 brew "docker"             # Docker CLI (Rancher Desktop cask below provides the daemon)
 brew "shellcheck"         # used by this repo's own shell script validation
 brew "uv"                 # Python tool runner (powers graphify)
+brew "pre-commit"         # git hook framework (README: `pre-commit install`)
 
 # =============================================================================
 # GUI Applications

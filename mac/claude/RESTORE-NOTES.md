@@ -24,7 +24,8 @@ So plain `claude` runs the default profile, `claude-personal` runs the other one
 Everything except `settings.json` is identical between the two — bootstrap copies
 the same sources into both dirs, and only the settings file differs per profile.
 
-The Ubuntu-side `claude/` dir mirrors the same content, adapted for Linux.
+The Ubuntu-side `claude/` dir mirrors the same content, adapted for Linux — minus
+`skills/`, which it pulls from here (see **Skills** below).
 
 ## File map
 
@@ -59,9 +60,10 @@ animation/design set (`animation-vocabulary`, `find-animation-opportunities`, th
 `mobile-app-ui-design`). `llms.txt` is the GSAP skill index, a loose file — copy
 it alongside the dirs.
 
-Skills are OS-agnostic. **Ubuntu setup should copy this same directory** to
-`~/.claude/skills/` — they are deliberately NOT duplicated under `claude/`.
-Reference `mac/claude/skills/` from the Ubuntu restore step.
+Skills are OS-agnostic and this is the **single source for both OSes**. Ubuntu's
+`install/claude.sh` already copies this directory into `~/.claude/skills/` — no manual
+step needed. They are deliberately NOT duplicated under the top-level `claude/`; if you
+add or update a skill, do it here.
 
 Nothing secret-looking was found in the copied skill files (scanned for token /
 key / password / bearer patterns).
@@ -115,7 +117,8 @@ even when running the second profile.
 `statusline.sh`. The three settings files are copied afterwards, one per target.
 Nothing here needs a manual `cp` any more.
 
-After the copy, bootstrap warns if any `REPLACE_ME` placeholder is still present
-in either profile's `settings.json`.
+`settings.personal.json` is restored to `~/.claude/settings.personal.json` but is
+**not** auto-read by Claude Code — it is a manual-swap alternate settings file
+(copy it over `settings.json` when you want that profile).
 
 `plugins.md` and this file are documentation — do not copy them into either profile.

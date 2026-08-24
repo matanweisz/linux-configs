@@ -81,6 +81,9 @@ brew "glow"               # terminal markdown renderer
 brew "yamllint"           # YAML linter
 brew "git-absorb"         # auto-fixup commits
 brew "tree-sitter-cli"    # required by nvim-treesitter main branch to compile parsers
+brew "shellcheck"         # shell script linter
+brew "uv"                 # fast Python package/tool manager
+brew "pre-commit"         # git hook framework (README: `pre-commit install`)
 
 # ---- Kubernetes power-user ----
 brew "kubescape"          # K8s security scanner (NSA/CIS/MITRE)
