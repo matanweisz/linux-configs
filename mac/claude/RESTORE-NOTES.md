@@ -10,22 +10,21 @@ Two live profiles on this machine:
 
 | Live path | Flavor | Repo source |
 |---|---|---|
-| `~/.claude` | work (ZoomInfo), the default profile | `mac/claude/` + `settings.json` |
-| `~/.claude-personal` | personal, richer plugin set | `mac/claude/` + `settings.claude-personal.json` |
+| `~/.claude` | default profile | `mac/claude/` + `settings.json` |
+| `~/.claude-personal` | richer plugin set | `mac/claude/` + `settings.claude-personal.json` |
 
 Claude Code reads whatever `CLAUDE_CONFIG_DIR` points at, defaulting to `~/.claude`.
-The personal profile is selected by the alias in `mac/zsh/.zsh_aliases`:
+The second profile is selected by the alias in `mac/zsh/.zsh_aliases`:
 
 ```sh
 alias claude-personal="CLAUDE_CONFIG_DIR=~/.claude-personal claude"
 ```
 
-So plain `claude` runs the work profile, `claude-personal` runs the personal one.
+So plain `claude` runs the default profile, `claude-personal` runs the other one.
 Everything except `settings.json` is identical between the two — bootstrap copies
 the same sources into both dirs, and only the settings file differs per profile.
 
-The Ubuntu-side `claude/` dir is a deliberately sanitized mirror — generic only,
-no employer-internal hosts, tickets, or vocabulary.
+The Ubuntu-side `claude/` dir mirrors the same content, adapted for Linux.
 
 ## File map
 
@@ -34,7 +33,7 @@ Everything in the first block is copied into **both** `~/.claude/` and
 
 | Repo | Restores to | Notes |
 |---|---|---|
-| `mac/claude/CLAUDE.md` | `<profile>/CLAUDE.md` | work-flavored |
+| `mac/claude/CLAUDE.md` | `<profile>/CLAUDE.md` | macOS-flavored |
 | `mac/claude/statusline.sh` | `<profile>/statusline.sh` | `chmod +x` |
 | `mac/claude/agents/` | `<profile>/agents/` | |
 | `mac/claude/commands/` | `<profile>/commands/` | |
@@ -47,18 +46,18 @@ Per-profile settings:
 
 | Repo | Restores to | Notes |
 |---|---|---|
-| `mac/claude/settings.json` | `~/.claude/settings.json` | work profile, see scrub list |
-| `mac/claude/settings.claude-personal.json` | `~/.claude-personal/settings.json` | personal profile, see scrub list |
-| `mac/claude/settings.personal.json` | `~/.claude/settings.personal.json` | alternate settings kept alongside the work profile |
+| `mac/claude/settings.json` | `~/.claude/settings.json` | default profile |
+| `mac/claude/settings.claude-personal.json` | `~/.claude-personal/settings.json` | second profile |
+| `mac/claude/settings.personal.json` | `~/.claude/settings.personal.json` | alternate settings kept alongside the default profile |
 
 ## Skills
 
 `mac/claude/skills/` (~484K, 16 skill dirs + `llms.txt`) is the union of both live
 profiles: `app-review`, `apple-design`, `graphify` (present in both) plus the
-personal-only animation/design set (`animation-vocabulary`,
-`find-animation-opportunities`, the `gsap-*` family, `improve-animations`,
-`review-animations`, `mobile-app-ui-design`). `llms.txt` is the GSAP skill index,
-a loose file — copy it alongside the dirs.
+animation/design set (`animation-vocabulary`, `find-animation-opportunities`, the
+`gsap-*` family, `improve-animations`, `review-animations`,
+`mobile-app-ui-design`). `llms.txt` is the GSAP skill index, a loose file — copy
+it alongside the dirs.
 
 Skills are OS-agnostic. **Ubuntu setup should copy this same directory** to
 `~/.claude/skills/` — they are deliberately NOT duplicated under `claude/`.
@@ -71,31 +70,16 @@ key / password / bearer patterns).
 
 | File | Key | Value in repo |
 |---|---|---|
-| `mac/claude/settings.json` | `env.ANTHROPIC_AUTH_TOKEN` | `REPLACE_ME_BEFORE_USE` |
-| `mac/claude/settings.json` | `env.ANTHROPIC_BASE_URL` | `REPLACE_ME_BASE_URL` |
 | `mac/claude/settings.json` | `mcpServers` | `{}` — emptied |
 | `mac/claude/settings.personal.json` | `mcpServers` | `{}` — emptied |
 | `mac/claude/settings.claude-personal.json` | `mcpServers` | `{}` — emptied |
 
-`ANTHROPIC_BASE_URL` in the live work profile points at the internal requesty
-router (an internal-only host), so it is scrubbed here — re-enter it manually
-alongside `mcpServers`, from the internal docs.
+`mcpServers` is machine-specific and is deliberately not committed. Re-add any MCP
+servers you want by hand after restore (`claude mcp add`, or edit the settings
+file), and keep their tokens in 1Password / Vault — never in this repo.
 
-`mcpServers` in all three live files points at internal work hosts and is
-deliberately not committed — it is machine- and work-specific. Two entries to
-re-add by hand after restore: `DataDog-MCP` and `ie-automation-mcp`, both
-`streamable-http`. Get the URLs from the internal docs, not from this repo.
-
-`mac/claude/settings.claude-personal.json` is a copy of live
-`~/.claude-personal/settings.json` with `mcpServers` emptied. It carries no auth
-token (that profile logs in via console), so `mcpServers` was the only scrub.
-
-`settings.personal.json` carries no auth token at all (it logs in via console),
-so nothing else was replaced there.
-
-**Not committed:** `~/.claude/settings.requesty.json`. It duplicates the `env`
-block already in `settings.json` and contributes nothing but a live token — no
-restore value, so it is skipped on purpose.
+No auth tokens or API base URLs are stored in any tracked settings file. All three
+profiles authenticate interactively on first run.
 
 ## Desired-state drift (intentional)
 
@@ -103,25 +87,25 @@ restore value, so it is skipped on purpose.
 `~/.claude/settings.json` does not have. That is deliberate — it is the desired
 state for a new machine, not a mirror of the current one. Everything else
 (`model`, `hooks`, `statusLine`, `enabledPlugins`, `extraKnownMarketplaces`,
-`forceLoginMethod`, `outputStyle`, `alwaysThinkingEnabled`,
-`skipDangerousModePermissionPrompt`) is synced to live.
+`outputStyle`, `alwaysThinkingEnabled`, `skipDangerousModePermissionPrompt`) is
+synced to live.
 
 ## Plugins
 
-Plugin code is not tracked. See `mac/claude/plugins.md` for the per-profile
-`enabledPlugins` lists and the marketplaces to re-add first.
+Plugin code is not tracked. See `mac/claude/plugins.md` for the `enabledPlugins`
+lists and the marketplaces to re-add first.
 
 ## Profile parity check
 
 `~/.claude-personal/rules/` and `~/.claude-personal/output-styles/` are byte-identical
-to the work profile's (`git-workflow.md`, `kubernetes.md`, `terraform.md`,
-`devops-terse.md`), so there is nothing personal-profile-only to preserve.
+to the default profile's (`git-workflow.md`, `kubernetes.md`, `terraform.md`,
+`devops-terse.md`), so there is nothing second-profile-only to preserve.
 `output-styles/human.md` exists only in `~/.claude` and is generic — it is tracked
 on both the mac and Ubuntu sides.
 
 Note: `~/.claude-personal/settings.json` points `statusLine.command` at
-`~/.claude/statusline.sh` (the work path), so the work profile's statusline script
-must exist even when running the personal profile.
+`~/.claude/statusline.sh`, so the default profile's statusline script must exist
+even when running the second profile.
 
 ## Bootstrap wiring
 

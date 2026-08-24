@@ -73,7 +73,6 @@ if [ "$SOURCE" = "compact" ]; then
   emit "- Never run \`kubectl apply\` / \`kubectl delete\` against a prod context without explicit approval."
   emit "- Never push to \`main\` / \`master\` directly. Open a PR."
   emit "- Secret files (\`~/.aws/credentials\`, \`*.pem\`, \`*.key\`, \`.env\`) are blocked at the Read layer — do not try to bypass."
-  emit "- Honor the GF naming convention: \`gf-<tier>-<func-app>-<cs|ns>-gcp\`."
   emit ""
 fi
 

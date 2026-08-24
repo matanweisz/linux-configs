@@ -112,10 +112,6 @@ restore_configs() {
     cp "${SCRIPT_DIR}/claude/settings.personal.json"        ~/.claude/settings.personal.json
     cp "${SCRIPT_DIR}/claude/settings.claude-personal.json" ~/.claude-personal/settings.json
 
-    if grep -q "REPLACE_ME" ~/.claude/settings.json ~/.claude-personal/settings.json 2>/dev/null; then
-        log_warn "Claude settings have REPLACE_ME placeholders (auth token / base URL) — see mac/claude/RESTORE-NOTES.md"
-    fi
-
     # btop config from linux-configs if available
     if [[ -f "${SCRIPT_DIR}/../configs/btop/btop.conf" ]]; then
         mkdir -p ~/.config/btop/themes

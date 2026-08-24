@@ -1,28 +1,13 @@
 ---
-description: Triage a failing Kubernetes pod / deployment / StatefulSet — gathers events, logs, describe, probes, and rollout history. Read-only.
-argument-hint: "<pod-or-deployment> [namespace] [context]"
-allowed-tools: Read, Bash(kubectl get:*), Bash(kubectl describe:*), Bash(kubectl logs:*), Bash(kubectl top:*), Bash(kubectl rollout history:*), Bash(kubectl explain:*), Bash(kubectl config:*), Bash(helm history:*), Bash(helm get:*), Bash(helm status:*), Bash(jq:*), Glob, Grep
+description: Triage a failing Kubernetes resource with the k8s-debugger subagent (read-only).
+argument-hint: "<resource> [namespace] [context]"
+allowed-tools: Bash(kubectl get:*), Bash(kubectl describe:*), Bash(kubectl logs:*), Bash(kubectl top:*), Bash(kubectl rollout history:*), Bash(kubectl rollout status:*), Bash(helm history:*), Read, Grep, Task
 ---
 
-Triage a failing Kubernetes workload via the `k8s-debugger` subagent.
+Resource: `$1`  Namespace: `${2:-current}`  Context: `${3:-current}`
 
-## Parsing arguments
-
-- `$1` = resource (required) — pod or `deployment/<name>` or `statefulset/<name>`
-- `$2` = namespace (optional, default `kubectl config view --minify -o jsonpath='{..namespace}'`)
-- `$3` = kube context (optional, default `kubectl config current-context`)
-
-If `$1` is missing, ask for it.
-
-## Steps
-
-1. **Confirm scope** — print the resolved `<resource> in <ns>@<ctx>` and ask the user to confirm if `$ctx` matches `prod|prd` (don't proceed without ack).
-
-2. **Hand off to `k8s-debugger`** with the parsed args.
-
-3. **Print the subagent's hypothesis + suggested commands**.
-
-## What this command never does
-
-- It never runs `kubectl delete`, `apply`, `patch`, `scale`, `rollout restart`, `helm upgrade`, `helm rollback`. Those are *suggestions only* — the user runs them.
-- It never `kubectl exec`s into containers.
+1. Confirm the active context (`kubectl config current-context`). If it looks like prod,
+   flag it and stay strictly read-only.
+2. Invoke the **k8s-debugger** subagent against `$1` in namespace `${2:-current}`.
+3. Report: what's broken, the evidence, root cause, and the proposed fix for me to apply.
+   Never apply/delete/scale/exec yourself.

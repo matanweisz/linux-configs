@@ -4,10 +4,10 @@ These apply when working in any git repository, regardless of language or platfo
 
 ## Default workflow for any change
 
-1. Start from a clean state: `git switch master` (or `main`), `git pull --ff-only`. Confirm `git status` is clean before branching.
-2. Branch name = ticket key (e.g. `IEDO-92809`). For multi-PR work on the same ticket, suffix the scope (e.g. `IEDO-92809-prd`).
+1. Start from a clean state: `git switch main` (or `master`), `git pull --ff-only`. Confirm `git status` is clean before branching.
+2. Branch name = issue key or a short kebab-case slug (e.g. `fix-nvim-treesitter`). For multi-PR work on the same issue, suffix the scope.
 3. Make the change. Show the user `git diff` before committing for any non-trivial edit.
-4. Commit with `git commit -m "<TICKET>: <imperative summary>"`. Use `git commit -am` only when every modified file is intended.
+4. Commit with `git commit -m "<imperative summary>"` (prefix the issue key when there is one). Use `git commit -am` only when every modified file is intended.
 5. Push with `git push -u origin <branch>`. Never force-push without explicit user approval.
 6. Open the PR via `gh pr create` if `gh` is authenticated for the host, otherwise hand the user the new-PR URL from the push response and a clean title + body to paste.
 
@@ -22,19 +22,14 @@ These apply when working in any git repository, regardless of language or platfo
 
 ## Pre-commit hooks
 
-- Some repos run formatters (`tf_fmt`, `prettier`, etc.) automatically. Let them. Don't try to revert hook-applied formatting fixes — the CI will fail without them. If the hook touches files outside your intended diff, mention it to the user but commit anyway.
+- Some repos run formatters (`prettier`, `shfmt`, etc.) automatically. Let them. Don't try to revert hook-applied formatting fixes — the CI will fail without them. If the hook touches files outside your intended diff, mention it to the user but commit anyway.
 
-## Internal git host (`git.zoominfo.com`)
+## Push access and credentials
 
-- The `gh` CLI works against the internal host via `GH_HOST=git.zoominfo.com gh <subcommand>` (env var, not `--hostname` flag).
-- If `gh auth status -h git.zoominfo.com` shows the token is invalid, do NOT loop on it — surface the issue to the user and either ask them to run `gh auth login -h git.zoominfo.com` or fall back to giving them the new-PR URL from the push response.
-
-## `git.zoominfo.com` write-access model
-
-- **HTTPS push requires per-org write permission**, even with a `repo`-scope PAT. Read works fleet-wide via cached osxkeychain creds, but `git push` returns `remote: Write access to repository not granted. fatal: ... 403` if the user isn't a collaborator on that repo's org. When a 403 hits, ask the user to request write access to the specific org (e.g. `dozi`, `data-innovation`, `zoominformation`); don't assume the PAT itself is the problem.
-- **Replace a stale cached cred without exposing the token**: `printf "protocol=https\nhost=git.zoominfo.com\nusername=<user>\npassword=<NEW_PAT>\n" | git credential approve`. To force a re-prompt instead: `git credential reject` then any `git fetch`/`ls-remote` will prompt fresh.
-- **`gh` CLI auth on `git.zoominfo.com` is independent of git credentials.** A 403 on `gh pr create` does NOT mean git push will fail (and vice versa). Always test both paths separately.
-- **PR creation without working `gh` CLI**: push the branch via plain `git push`, then hand the user the GHE compare URL `https://git.zoominfo.com/<org>/<repo>/compare/<base>...<branch>?expand=1` — clicking it opens a new-PR page with title/body prefilled from the commit.
+- A `repo`-scope token is not the same as write access. On hosts with per-org permissions, read works fleet-wide from cached credentials while `git push` still returns `remote: Write access to repository not granted. fatal: ... 403`. When a 403 hits, the fix is requesting write access to that repo/org — don't assume the token itself is broken.
+- **Replace a stale cached credential without exposing the token**: `printf "protocol=https\nhost=<host>\nusername=<user>\npassword=<NEW_TOKEN>\n" | git credential approve`. To force a re-prompt instead: `git credential reject`, then any `git fetch` / `ls-remote` prompts fresh.
+- **`gh` CLI auth is independent of git credentials.** A 403 on `gh pr create` does NOT mean `git push` will fail (and vice versa). Test both paths separately.
+- If `gh auth status` shows an invalid token, do NOT loop on it — surface it to the user and fall back to the new-PR URL from the push response.
 
 ## Shallow clone tracking-ref gotcha
 
@@ -60,14 +55,13 @@ Empty output → whitespace only → delete branch (`git push origin --delete <b
 
 ## PR description template
 
-For ticket-driven PRs, the body should include at minimum:
 - One-paragraph summary of what's changing and why
-- Link to the Jira/issue ticket
-- For infra PRs: pointer to the env0/CI plan run that will be produced (or the local plan output if you ran one)
+- Link to the issue, if there is one
+- For infra PRs: pointer to the CI plan run that will be produced (or the local plan output if you ran one)
 - Reference to any sibling PRs (e.g. `Follow-up to #48`) when work is split across multiple PRs
 
-Keep titles under 70 chars. Lead with the ticket key: `IEDO-XXXXX: <imperative summary>`.
+Keep titles under 70 chars, imperative mood.
 
 ## After-merge follow-up
 
-When a tracking ticket has multiple sub-PRs, comment the merged PR URL on the relevant sub-ticket (only after merge, only if the ticket has an assignee other than yourself — let them close it). Never auto-close tickets you don't own.
+When a tracking issue has multiple sub-PRs, comment the merged PR URL on the relevant sub-issue (only after merge, only if it has an assignee other than yourself — let them close it). Never auto-close issues you don't own.

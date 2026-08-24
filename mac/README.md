@@ -351,7 +351,7 @@ The included `~/.claude/settings.json` pre-allows safe read-only Bash commands (
 
 `restore_configs()` (option 3) also restores `agents/`, `commands/`, `hooks/`, `output-styles/`, `rules/`, `skills/` and `settings.personal.json` into `~/.claude/`.
 
-**Secrets are scrubbed in-repo:** `ANTHROPIC_AUTH_TOKEN` is `REPLACE_ME_BEFORE_USE` and both `mcpServers` blocks are emptied — they must be re-entered by hand. Full map of what lands where, plus the plugin/marketplace list, is in **`mac/claude/RESTORE-NOTES.md`** and `mac/claude/plugins.md`.
+**Secrets are scrubbed in-repo:** no auth tokens are tracked, and every `mcpServers` block is emptied — re-add MCP servers by hand after restore. Full map of what lands where, plus the plugin/marketplace list, is in **`mac/claude/RESTORE-NOTES.md`** and `mac/claude/plugins.md`.
 
 ---
 
