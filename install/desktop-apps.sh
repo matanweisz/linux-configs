@@ -87,14 +87,14 @@ install_snap beekeeper-studio
 # ============================================
 log_info "Installing OpenLens..."
 if ! command -v open-lens &>/dev/null && ! dpkg -l 2>/dev/null | grep -qi openlens; then
-    url="$(curl -fsSL https://api.github.com/repos/MuhammedKalkan/OpenLens/releases/latest \
-          | jq -r '.assets[]|select(.name|test("amd64\\.deb$")).browser_download_url' | head -1)"
-    if [[ -n "$url" ]]; then
+    url="$(curl -fsSL https://api.github.com/repos/MuhammedKalkan/OpenLens/releases/latest 2>/dev/null \
+          | jq -r '.assets[]|select(.name|test("amd64\\.deb$")).browser_download_url' 2>/dev/null | head -1 || true)"
+    if [[ -n "$url" && "$url" != "null" ]]; then
         wget -q -O /tmp/openlens.deb "$url"
         sudo apt-get install -y /tmp/openlens.deb && log_success "OpenLens installed" || log_warn "OpenLens install failed"
         rm -f /tmp/openlens.deb
     else
-        log_warn "Could not resolve OpenLens release — skipping"
+        log_warn "OpenLens install skipped (GitHub API unavailable)"
     fi
 else
     log_success "OpenLens already installed"

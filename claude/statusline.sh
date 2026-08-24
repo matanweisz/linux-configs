@@ -16,7 +16,9 @@ set -u
 INPUT=$(cat)
 
 # ---------- one-pass jq parse ----------
-mapfile -t _F < <(printf '%s' "$INPUT" | jq -r '
+# (read loop instead of `mapfile` — macOS ships bash 3.2, which lacks it)
+_F=()
+while IFS= read -r _line; do _F+=("$_line"); done < <(printf '%s' "$INPUT" | jq -r '
   .model.display_name // "?",
   (.effort.level // ""),
   (.thinking.enabled // false | tostring),

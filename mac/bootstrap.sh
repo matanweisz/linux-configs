@@ -47,7 +47,10 @@ install_homebrew() {
     else
         log_info "Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        [[ -f /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
+        # /opt/homebrew = Apple Silicon, /usr/local = Intel
+        for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+            [[ -x "$b" ]] && eval "$("$b" shellenv)" && break
+        done
         log_success "Homebrew installed"
     fi
 }
@@ -62,6 +65,11 @@ install_packages() {
         log_warn "docker-desktop is installed and conflicts with rancher — uninstalling..."
         brew uninstall --cask docker-desktop
     fi
+
+    # Recent brew refuses to load third-party tap formulae until the tap is trusted.
+    # `|| true` keeps older brew (no `trust` subcommand) working.
+    brew trust --tap felixkratz/formulae 2>/dev/null || true
+    brew trust --tap fluxcd/tap 2>/dev/null || true
 
     brew bundle --file="${SCRIPT_DIR}/Brewfile"
     log_success "Packages installed"
@@ -183,8 +191,8 @@ setup_zinit() {
 
 setup_krew() {
     if ! command -v kubectl &>/dev/null; then
-        log_warn "kubectl not installed — run brew bundle first"
-        return 1
+        log_warn "kubectl not installed — run brew bundle first (skipping krew)"
+        return 0
     fi
     if [[ -d "${KREW_ROOT:-$HOME/.krew}" ]] && command -v "${KREW_ROOT:-$HOME/.krew}/bin/kubectl-krew" &>/dev/null; then
         log_success "krew already installed"
@@ -230,8 +238,8 @@ install_claude_code() {
 
 setup_borders() {
     if ! command -v borders &>/dev/null; then
-        log_warn "JankyBorders not installed — run brew bundle first"
-        return 1
+        log_warn "JankyBorders not installed — run brew bundle first (skipping borders)"
+        return 0
     fi
     mkdir -p ~/.config/borders
     cp "${SCRIPT_DIR}/configs/borders/bordersrc" ~/.config/borders/bordersrc
@@ -243,7 +251,7 @@ setup_borders() {
 setup_safe_rm() {
     mkdir -p "$HOME/.local/share/trash"
     log_success "Safe-rm trash directory ready at ~/.local/share/trash"
-    log_info "Use 'rm' to trash, 'unrm' to restore, 'trash-clean' to purge >7 days, '\\rm' to bypass"
+    log_info "Use 'rm' to trash, 'unrm' to restore, 'trash-clean' to purge >7 days, 'command rm' to bypass"
 }
 
 install_gcloud() {

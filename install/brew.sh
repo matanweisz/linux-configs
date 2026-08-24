@@ -49,9 +49,15 @@ if [[ -f "$HOME/.bashrc" ]] && ! grep -q "linuxbrew/.linuxbrew/bin/brew shellenv
 fi
 
 # ---- Install CLI tools from Brewfile ----
+# Recent brew refuses to load third-party tap formulae until the tap is trusted.
+# `|| true` keeps older brew (no `trust` subcommand) working.
+brew trust --tap fluxcd/tap 2>/dev/null || true
 log_info "Installing CLI tools from Brewfile (this can take a while)..."
-brew bundle --file="${REPO_DIR}/Brewfile"
-log_success "Brewfile packages installed"
+if brew bundle --file="${REPO_DIR}/Brewfile"; then
+    log_success "Brewfile packages installed"
+else
+    log_warn "brew bundle finished with errors — some packages may be missing (see verify below)"
+fi
 
 # ---- krew + must-have kubectl plugins ----
 setup_krew() {
@@ -93,7 +99,7 @@ verify_brew() {
     local tools=(eza bat fd rg fzf zoxide atuin direnv btop jq yq starship \
                  git delta lazygit gh gitleaks aws terraform terragrunt ansible \
                  kubectl kubectx helm k9s argocd stern lazydocker dive trivy \
-                 go node nvim stow tlrc mkcert gum just dust duf procs btm xh \
+                 go node nvim stow tldr mkcert gum just dust duf procs btm xh \
                  fx glow yamllint git-absorb tree-sitter kubescape kubecolor \
                  helm-docs kustomize kind helmfile flux)
     for t in "${tools[@]}"; do

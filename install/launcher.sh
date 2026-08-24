@@ -63,11 +63,11 @@ install_vicinae_binary() {
   log_info "Installing vicinae (latest GitHub release)..."
   mkdir -p "$HOME/.local/bin"
   local url tmp
-  url="$(curl -fsSL https://api.github.com/repos/vicinaehq/vicinae/releases/latest \
-    | jq -r '.assets[]|select(.name|test("linux-x86_64.*tar\\.gz$")).browser_download_url' | head -1)"
-  if [[ -z "$url" ]]; then
-    log_error "could not resolve vicinae release asset"
-    return 1
+  url="$(curl -fsSL https://api.github.com/repos/vicinaehq/vicinae/releases/latest 2>/dev/null \
+    | jq -r '.assets[]|select(.name|test("linux-x86_64.*tar\\.gz$")).browser_download_url' 2>/dev/null | head -1 || true)"
+  if [[ -z "$url" || "$url" == "null" ]]; then
+    log_warn "vicinae install skipped (GitHub API unavailable)"
+    return 0
   fi
   tmp="$(mktemp -d)"
   curl -fsSL "$url" -o "$tmp/vicinae.tar.gz"
@@ -91,8 +91,8 @@ install_vicinae_binary() {
   chmod +x "$HOME/.local/bin/vicinae" 2>/dev/null || true
   rm -rf "$tmp"
   command -v vicinae &>/dev/null && log_success "vicinae installed" || {
-    log_error "vicinae install failed"
-    return 1
+    log_warn "vicinae install failed"
+    return 0
   }
 }
 
@@ -137,10 +137,10 @@ install_vicinae_extension() {
   else
     log_info "Installing Vicinae GNOME companion extension..."
     local url tmp
-    url="$(curl -fsSL https://api.github.com/repos/vicinaehq/gnome-extension/releases/latest \
-      | jq -r '.assets[]|select(.name|test("shell-extension.*\\.zip$")).browser_download_url' | head -1)"
-    if [[ -z "$url" ]]; then
-      log_warn "could not resolve extension release"
+    url="$(curl -fsSL https://api.github.com/repos/vicinaehq/gnome-extension/releases/latest 2>/dev/null \
+      | jq -r '.assets[]|select(.name|test("shell-extension.*\\.zip$")).browser_download_url' 2>/dev/null | head -1 || true)"
+    if [[ -z "$url" || "$url" == "null" ]]; then
+      log_warn "Vicinae GNOME extension install skipped (GitHub API unavailable)"
       return 0
     fi
     tmp="$(mktemp -d)"

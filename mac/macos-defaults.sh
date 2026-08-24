@@ -48,6 +48,8 @@ defaults write com.apple.screencapture disable-shadow -bool true
 
 # ---- Trackpad ----
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+defaults write com.apple.AppleMultitouchTrackpad Clicking -int 1          # built-in trackpad
+defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1          # tap-to-click at login window
 # Three-finger drag intentionally NOT set — enabling it reassigns 3-finger swipes
 # from Mission Control/spaces to drag, which breaks the default gesture muscle memory.
 

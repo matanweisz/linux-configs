@@ -2,6 +2,8 @@
 
 Bootstrap automation for a Mac DevOps workstation. Installs tools via Homebrew, restores dotfiles, and configures the system with the **Tokyo Night** theme across all tools.
 
+Repo entry point (both OSes, plus the backup-refresh workflow): **`../README.md`**.
+
 ## Quick Start
 
 ```bash
@@ -19,6 +21,9 @@ After bootstrap:
 5. JankyBorders auto-starts as a `brew services` daemon (focus ring on the active window)
 6. Launch Rancher Desktop: `open -a "Rancher Desktop"` — first run sets up Kubernetes & container runtime
 7. Generate SSH key: `ssh-keygen -t ed25519 -C "your@email.com"`
+8. Claude Code: re-add `mcpServers` and the plugin marketplaces by hand — `claude/RESTORE-NOTES.md`, `claude/plugins.md`
+9. Raycast snippets/quicklinks: import your `.rayconfig` — `raycast/README.md`
+10. `pre-commit install` at the repo root (activates the gitleaks hook)
 
 ---
 
@@ -49,6 +54,7 @@ mac/
 ├── raycast/                  # plist + README (launcher, tiling, shortcuts)
 ├── alttab/                   # plist + README (Cmd+Tab replacement)
 └── claude/                   # Claude Code config — see RESTORE-NOTES.md
+    └── skills/               # single source of skills for BOTH OSes (Ubuntu copies from here)
 ```
 
 > Window management & keyboard shortcuts: **Raycast** (tiling + launcher) + **JankyBorders** (focus ring, `configs/borders/bordersrc`) + **AltTab** (window switcher). Raycast and AltTab restore from tracked plists via `defaults import`; the import is skipped if the app is running, so quit it and re-run option 3.
@@ -96,7 +102,7 @@ mac/
 
 ### GUI Apps
 
-Ghostty, VS Code, Rancher Desktop, Raycast, Chrome, Slack, WhatsApp, Bitwarden, Spotify, Stats (menu bar monitor).
+Ghostty, VS Code, Rancher Desktop, Raycast, AltTab, Chrome, Slack, WhatsApp, Bitwarden, Spotify, Stats (menu bar monitor), Android Studio (+ command line tools, platform tools), Codex CLI.
 
 ---
 
@@ -115,7 +121,6 @@ Ghostty, VS Code, Rancher Desktop, Raycast, Chrome, Slack, WhatsApp, Bitwarden, 
 | `fast-syntax-highlighting` | Real-time command coloring (~3× faster than zsh-syntax-highlighting) |
 | `zsh-autosuggestions` | Fish-like inline suggestions from history (accept with `Ctrl+Space`) |
 | `zsh-history-substring-search` | Up/Down arrows complete from history matching the typed prefix |
-| `zsh-you-should-use` | Nudges you when you type a command that has an alias |
 | `forgit` | fzf-driven git: `ga`, `glo`, `gd`, `gco`, etc. |
 | OMZ snippets | Completion-only snippets for kubectl, helm, terraform, aws, docker, gcloud |
 
@@ -324,10 +329,10 @@ The shell defines `rm` as a function that **moves** files to `~/.local/share/tra
 | `unrm` | Show contents of the most recent trash batch |
 | `unrm <name>` | Restore an item from the most recent batch back to `./` |
 | `trash-clean` | Permanently delete all batches older than 7 days |
-| `\rm <path>` | Bypass the function — real `/bin/rm` deletion (use this when you mean it) |
-| `/bin/rm <path>` | Same effect as `\rm` — direct binary call |
+| `command rm <path>` | Bypass the function — real `rm` deletion (use this when you mean it) |
+| `/bin/rm <path>` | Same effect as `command rm` — direct binary call |
 
-The `\rm` escape works because zsh expands aliases but NOT functions when prefixed with `\`. Same trick lets you call `\ls` to bypass the eza alias, etc.
+A leading backslash (`\rm`) does **not** work here: it suppresses *alias* expansion only, and `rm` is a function. Use `command rm` or `/bin/rm`. The backslash trick does work for aliases — e.g. `\ls` bypasses the eza alias.
 
 ---
 
@@ -335,21 +340,25 @@ The `\rm` escape works because zsh expands aliases but NOT functions when prefix
 
 Bootstrap option 7 installs Claude Code via the official native installer (auto-updating) and copies a custom statusline + permissions to `~/.claude/`.
 
-The statusline shows two lines:
+The statusline shows three lines (the middle one is omitted when no cloud/k8s context is active):
 
 ```
-[Sonnet 4.6] high  📁 mac  🌿 main  ⎈ prod-eks  ☁️ default
-██████████ 64% | $0.42 | ⏱ 12m04s
+Opus high * │ mac │ main +1 ~2 │ @agent
+k8s:prod-eks/default │ gcp:my-proj │ aws:default@123456789012 │ tf:prd
+████░░░░░░░░ 64% │ $0.42 │ 12m04s │ +156/-23 │ v2.1.90
 ```
 
-Top line: model + effort + dir + git branch + k8s context + AWS profile.
-Bottom line: context bar (green/yellow/red by usage) + cost + duration.
+Line 1 (identity): model + effort + dir + worktree + git branch/status + agent.
+Line 2 (environment): k8s context/namespace + GCP project + AWS profile/account + terraform workspace.
+Line 3 (session): context bar (green/yellow/red by usage) + cost + duration + lines changed + rate limits + version.
 
 Customize in `mac/claude/statusline.sh`. The script caches `git`/`kubectl` lookups for 5 seconds per session to avoid spam.
 
 The included `~/.claude/settings.json` pre-allows safe read-only Bash commands (git status, kubectl get, ls, cat, rg, etc.) so you don't get permission prompts for them.
 
-`restore_configs()` (option 3) also restores `agents/`, `commands/`, `hooks/`, `output-styles/`, `rules/`, `skills/` and `settings.personal.json` into `~/.claude/`.
+`restore_configs()` (option 3) populates **both** profiles — `~/.claude` (default) and `~/.claude-personal` (used by the `claude-personal` alias) — with `CLAUDE.md`, `statusline.sh`, and `agents/`, `commands/`, `hooks/`, `output-styles/`, `rules/`, `skills/`. Settings go one per target: `settings.json` and `settings.personal.json` into `~/.claude/`, `settings.claude-personal.json` into `~/.claude-personal/settings.json`.
+
+`claude/skills/` is the **single source of skills for both OSes** — Ubuntu's `install/claude.sh` copies it into `~/.claude/skills`. Don't duplicate it under the top-level `claude/`.
 
 **Secrets are scrubbed in-repo:** no auth tokens are tracked, and every `mcpServers` block is emptied — re-add MCP servers by hand after restore. Full map of what lands where, plus the plugin/marketplace list, is in **`mac/claude/RESTORE-NOTES.md`** and `mac/claude/plugins.md`.
 
@@ -367,6 +376,14 @@ gitleaks detect            # full history
 
 ---
 
+## Refreshing this backup
+
+Configs are copied, not symlinked — live edits don't flow back. The live-path → repo-path map, the Raycast/AltTab plist re-export one-liners, Brewfile-dump caveats, and the `defaults read` drift check all live in **`../README.md` → "Updating the backup"**.
+
+Per-app detail: `raycast/README.md`, `alttab/README.md`, `claude/RESTORE-NOTES.md`.
+
+---
+
 ## Handing this machine back
 
 See **`HANDBACK.md`** at the repo root — credential rotation, what to export before a wipe, and what to sign out of.
@@ -379,7 +396,7 @@ See **`HANDBACK.md`** at the repo root — credential rotation, what to export b
 - **Containers/K8s:** Rancher Desktop replaces Docker Desktop (open source, integrated K8s)
 - **tmux:** not installed — workflow uses Ghostty splits; `configs/tmux/tmux.conf` is kept for portability only
 - **Safe rm:** `rm` now trashes to `~/.local/share/trash/<ts>/`; added `unrm` + `trash-clean`
-- **Zsh:** turbo-loading; switched to `fast-syntax-highlighting`; added `zsh-history-substring-search`, `you-should-use`, `forgit`, OMZ completion snippets for kubectl/helm/tf/aws/docker/gcloud
+- **Zsh:** turbo-loading; switched to `fast-syntax-highlighting`; added `zsh-history-substring-search`, `forgit`, OMZ completion snippets for kubectl/helm/tf/aws/docker/gcloud
 - **Brewfile:** added `tlrc`, `mkcert`, `gum`, `just`, `dust`, `duf`, `procs`, `bottom`, `xh`, `fx`, `glow`, `yamllint`, `git-absorb`, `kubescape`, `kubecolor`, `helm-docs`, `kustomize`, `kind`, `helmfile`, `flux`
 - **kubectl plugins:** krew + `tree`, `neat`, `view-secret`, `resource-capacity`, `images`, `who-can`, `node-shell`, `deprecations`, `explore`, `rolesum`
 - **Claude Code:** native installer + DevOps statusline + permission defaults

@@ -53,6 +53,11 @@ for sub in agents commands hooks output-styles rules; do
         cp -R "$SRC/$sub/." "$HOME/.claude/$sub/"
     fi
 done
+# Skills are shared with the macOS stack (only copy that exists in the repo).
+if [[ -d "$REPO_DIR/mac/claude/skills" ]]; then
+    mkdir -p "$HOME/.claude/skills"
+    cp -R "$REPO_DIR/mac/claude/skills/." "$HOME/.claude/skills/"
+fi
 chmod +x "$HOME"/.claude/hooks/*.sh 2>/dev/null || true
 log_success "Claude config installed (sanitized — standard Anthropic login)"
 

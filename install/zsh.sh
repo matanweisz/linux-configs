@@ -52,7 +52,10 @@ fi
 
 # ---- Verify ----
 log_info "Verifying zsh setup..."
-if zsh -ic 'exit' 2>/dev/null; then
+if [[ ! -f "$HOME/.zshrc" ]]; then
+    # Without a ~/.zshrc, `zsh -i` drops into the blocking zsh-newuser-install wizard.
+    log_info "VERIFY deferred: ~/.zshrc not present yet (install/restore-configs.sh puts it there)"
+elif zsh -ic 'exit' 2>/dev/null; then
     log_success "VERIFY PASS: zsh starts with the new config"
     log_info "Startup time:"; (TIMEFMT='  %*E s'; time zsh -ic exit) 2>&1 || true
 else

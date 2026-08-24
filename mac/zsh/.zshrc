@@ -67,10 +67,10 @@ SAVEHIST=$HISTSIZE
 setopt appendhistory sharehistory
 setopt hist_ignore_space hist_ignore_all_dups hist_save_no_dups
 
-# ---- Key Bindings ----# ---- Tool Init ----
-eval "$(starship init zsh)"
-eval "$(zoxide init --cmd cd zsh)"
-eval "$(direnv hook zsh)"
+# ---- Tool Init ----
+command -v starship &>/dev/null && eval "$(starship init zsh)"
+command -v zoxide &>/dev/null && eval "$(zoxide init --cmd cd zsh)"
+command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 command -v atuin &>/dev/null && eval "$(atuin init zsh)"
 command -v fzf &>/dev/null && source <(fzf --zsh)
 
