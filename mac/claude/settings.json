@@ -1,10 +1,6 @@
 {
   "cleanupPeriodDays": 30,
   "env": {
-    "ANTHROPIC_BASE_URL": "REPLACE_ME_BASE_URL",
-    "ANTHROPIC_MODEL": "policy/zoominfo-general",
-    "ANTHROPIC_AUTH_TOKEN": "REPLACE_ME_BEFORE_USE",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "anthropic/claude-haiku-4-5",
     "BASH_DEFAULT_TIMEOUT_MS": "120000",
     "BASH_MAX_TIMEOUT_MS": "600000",
     "MCP_TIMEOUT": "30000",
@@ -487,7 +483,6 @@
       }
     }
   },
-  "forceLoginMethod": "console",
   "outputStyle": "default",
   "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true,

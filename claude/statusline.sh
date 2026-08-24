@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Three-line Claude Code status line for DevOps / CloudInfra IL.
+# Three-line Claude Code status line for DevOps work.
 # Designed for Ghostty + Nerd Font + Nord-ish palette.
 # Caches expensive subshells (git/kubectl/gcloud/aws/tf) per session for 5s.
 #

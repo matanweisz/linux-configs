@@ -2,41 +2,25 @@
 
 Restore reference only — not executable. Plugin *code* is not tracked in this repo
 (it lives under `~/.claude*/plugins/`, managed by Claude Code). On a new machine,
-add the marketplaces below, then enable the plugins per profile. `enabledPlugins`
-keys in `settings.json` use the form `<plugin>@<marketplace>`.
+add the marketplaces below, then enable the plugins. `enabledPlugins` keys in the
+settings files use the form `<plugin>@<marketplace>`.
 
 ## Marketplaces
 
-`extraKnownMarketplaces` keys seen across both profiles:
+| Marketplace | Source |
+|---|---|
+| `claude-plugins-official` | github `anthropics/claude-plugins-official` |
+| `ponytail` | github `DietrichGebert/ponytail` |
+| `kubernetes-skill` | github `LukasNiessen/kubernetes-skill` |
+| `ui-ux-pro-max-skill` | github `nextlevelbuilder/ui-ux-pro-max-skill` |
+| `humanizer` | github `blader/humanizer` |
 
-| Marketplace | Source | Used by |
-|---|---|---|
-| `claude-plugins-official` | github `anthropics/claude-plugins-official` | work + personal |
-| `ponytail` | third-party | personal |
-| `kubernetes-skill` | third-party | personal |
-| `ui-ux-pro-max-skill` | third-party | personal |
-| `humanizer` | third-party | personal |
+All five have their `source` block captured in
+`mac/claude/settings.claude-personal.json` → `extraKnownMarketplaces`, so a restore
+of that file re-registers them. To add one by hand:
+`/plugin marketplace add <owner>/<repo>`.
 
-Only `claude-plugins-official` has its `source` block captured (in
-`mac/claude/settings.json`). The four personal marketplaces are third-party;
-re-add them with `/plugin marketplace add <repo-or-url>` — the exact sources are
-not recorded here on purpose.
-
-## Work profile — `~/.claude` (7)
-
-From `claude-plugins-official`:
-
-- `context7`
-- `security-guidance`
-- `claude-md-management`
-- `slack`
-- `atlassian`
-- `frontend-design`
-- `vercel`
-
-Tracked in `mac/claude/settings.json` → `enabledPlugins`.
-
-## Personal profile — `~/.claude-personal` (25)
+## Plugin list (25)
 
 From `claude-plugins-official`:
 
@@ -69,12 +53,12 @@ From third-party marketplaces:
 - `kubernetes-skill@kubernetes-skill`
 - `ui-ux-pro-max@ui-ux-pro-max-skill`
 
-Tracked in `mac/claude/settings.personal.json` → `enabledPlugins`.
+Tracked in `mac/claude/settings.claude-personal.json` → `enabledPlugins`. This is
+the full, current set — treat it as the source of truth.
 
 ## Note
 
-`~/.claude/settings.personal.json` (the file this repo copies as
-`mac/claude/settings.personal.json`) lists a *smaller* set — 17 plugins, the
-`claude-plugins-official` subset only. The live `~/.claude-personal/settings.json`
-is the richer, current list above. If the two disagree after restore, the list
-above wins.
+The other two settings files enable smaller subsets:
+`mac/claude/settings.json` (7 plugins) and `mac/claude/settings.personal.json`
+(17, the `claude-plugins-official` subset only). If they disagree with the list
+above after a restore, the list above wins.

@@ -46,7 +46,7 @@ The new flow prefers the curated `install/gnome-setup.sh` over restoring an old 
 
 **Config layout:** topic dirs (`mac/zsh/`, `mac/nvim/`, `mac/ghostty/`, `mac/aerospace/`, `mac/alttab/`, `mac/raycast/`, `mac/claude/`, `mac/configs/{borders,tmux,gh,atuin}/`). `restore_configs()` copies (not symlinks) to `~/.config/` and `~`. `mac/alttab/` and `mac/raycast/` are `defaults import` plists, not file copies — the import is skipped while the app is running.
 
-**Claude Code config:** `mac/claude/` restores to `~/.claude/` — `settings.json` + `settings.personal.json` + `statusline.sh` by direct `cp`, then `agents commands hooks output-styles rules skills` via the `for sub in …` loop in `restore_configs()`. `plugins.md` and `RESTORE-NOTES.md` are docs and must NOT be copied into `~/.claude`. Secrets (`ANTHROPIC_AUTH_TOKEN`, `mcpServers`) are scrubbed in-repo — see `mac/claude/RESTORE-NOTES.md`.
+**Claude Code config:** `mac/claude/` restores to `~/.claude/` — `settings.json` + `settings.personal.json` + `statusline.sh` by direct `cp`, then `agents commands hooks output-styles rules skills` via the `for sub in …` loop in `restore_configs()`. `plugins.md` and `RESTORE-NOTES.md` are docs and must NOT be copied into `~/.claude`. Secrets are scrubbed in-repo — no auth tokens are tracked and every `mcpServers` block is emptied. See `mac/claude/RESTORE-NOTES.md`.
 
 **Cross-platform configs:** `mac/bootstrap.sh` reads `${SCRIPT_DIR}/../configs/btop/` from the top-level `configs/` dir — that's the single source of truth for the btop theme on both OSes.
 
