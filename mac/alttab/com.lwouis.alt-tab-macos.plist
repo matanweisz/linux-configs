@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>MSAppCenter310AppCenterUserDefaultsMigratedKey</key>
+	<true/>
+	<key>MSAppCenter310CrashesUserDefaultsMigratedKey</key>
+	<true/>
+	<key>MSAppCenterNetworkRequestsAllowed</key>
+	<false/>
+	<key>NSWindow Frame NSSpellCheckerSpellingPanel</key>
+	<string>414 375 431 290 0 0 1512 949 </string>
+	<key>NSWindow Frame NSSpellCheckerSubstitutionsPanel2</key>
+	<string>692 399 359 150 0 0 1512 949 </string>
+	<key>NSWindow Frame PermissionsWindow</key>
+	<string>495 387 521 427 0 0 1512 944 </string>
+	<key>NSWindow Frame SUStatusFrame</key>
+	<string>556 607 400 139 0 0 1512 949 </string>
+	<key>NSWindow Frame SUUpdateAlert</key>
+	<string>446 410 620 402 0 0 1512 949 </string>
+	<key>NSWindow Frame SUUpdateAlert2</key>
+	<string>485 410 543 402 0 0 1512 949 </string>
+	<key>NSWindow Frame SettingsWindow</key>
+	<string>191 189 911 524 0 0 1512 944 </string>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUHasLaunchedBefore</key>
+	<true/>
+	<key>SULastCheckTime</key>
+	<date>2026-08-18T15:32:47Z</date>
+	<key>SUSkippedVersion</key>
+	<string>11.4.3</string>
+	<key>SUUpdateGroupIdentifier</key>
+	<integer>3754076214</integer>
+	<key>SUUpdateRelaunchingMarker</key>
+	<true/>
+	<key>appearanceSize</key>
+	<string>1</string>
+	<key>preferencesVersion</key>
+	<string>11.4.4</string>
+	<key>previewFocusedWindow</key>
+	<string>true</string>
+	<key>settingsWindowShownOnFirstLaunch</key>
+	<string>true</string>
+	<key>updatePolicy</key>
+	<string>1</string>
+</dict>
+</plist>

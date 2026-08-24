@@ -6,10 +6,10 @@ Bootstrap automation for a Mac DevOps workstation. Installs tools via Homebrew, 
 
 ```bash
 cd mac
-./bootstrap.sh   # Choose option 11 to run everything
+./bootstrap.sh   # Choose option 12 to run everything
 ```
 
-> Updating an existing machine? Re-run `./bootstrap.sh` and pick option **10 (Cleanup orphaned packages)** to uninstall anything you removed from the Brewfile. The cleanup is opt-in and shows you what it would remove before doing it.
+> Updating an existing machine? Re-run `./bootstrap.sh` and pick option **11 (Cleanup orphaned packages)** to uninstall anything you removed from the Brewfile. The cleanup is opt-in and shows you what it would remove before doing it.
 
 After bootstrap:
 1. Open a new terminal for zsh config to load
@@ -32,19 +32,28 @@ mac/
 ├── configs/
 │   ├── .gitconfig            # Git config with delta diffs
 │   ├── .gitignore_global     # Global gitignore (.DS_Store, .env, etc.)
-│   └── starship.toml         # One-line prompt with Tokyo Night colors
+│   ├── starship.toml         # One-line prompt with Tokyo Night colors
+│   ├── borders/bordersrc     # JankyBorders focus ring
+│   ├── tmux/tmux.conf        # tmux config
+│   ├── gh/config.yml         # GitHub CLI config
+│   └── atuin/config.toml     # Shell history search (local-only, no sync)
 ├── zsh/
 │   ├── .zshrc                # Shell config with Zinit plugins
 │   └── .zsh_aliases          # All aliases and shell functions
 ├── ghostty/
 │   └── config                # Terminal config (Tokyo Night theme)
-├── ghostty/
-│   └── config                # Terminal config (Tokyo Night theme)
-└── nvim/
-    └── init.lua              # Neovim config (lazy.nvim, Tokyo Night)
+├── nvim/
+│   └── init.lua              # Neovim config (lazy.nvim, Tokyo Night)
+├── aerospace/
+│   └── aerospace.toml        # AeroSpace tiling WM (config only — not in Brewfile)
+├── raycast/                  # plist + README (launcher, tiling, shortcuts)
+├── alttab/                   # plist + README (Cmd+Tab replacement)
+└── claude/                   # Claude Code config — see RESTORE-NOTES.md
 ```
 
-> Window management & keyboard shortcuts: **Raycast** (configured via its UI) + **JankyBorders** (focus ring, `configs/borders/bordersrc`) + **AltTab** (window switcher, configured via its UI).
+> Window management & keyboard shortcuts: **Raycast** (tiling + launcher) + **JankyBorders** (focus ring, `configs/borders/bordersrc`) + **AltTab** (window switcher). Raycast and AltTab restore from tracked plists via `defaults import`; the import is skipped if the app is running, so quit it and re-run option 3.
+>
+> `aerospace/aerospace.toml` and `configs/tmux/tmux.conf` are kept for portability — neither AeroSpace nor tmux is in the Brewfile, so `restore_configs()` places the config but the tool isn't installed. Add the formula/cask if you start using them.
 
 ---
 
@@ -205,14 +214,14 @@ Single-line prompt showing only essential info with Tokyo Night colors:
 
 ### Raycast (window tiling + keyboard shortcuts)
 
-Raycast is the unified launcher / window-tiler / clipboard manager / shortcut runner. The bootstrap installs it via Brew but does **not** sync settings — those are configured per-machine through Raycast Pro's iCloud sync or its built-in import/export.
+Raycast is the unified launcher / window-tiler / clipboard manager / shortcut runner. The bootstrap installs it via Brew and restores `raycast/com.raycast.macos.plist` with `defaults import`. That plist covers preferences and hotkeys only — **snippets and quicklinks live in a `.rayconfig` export**, see `mac/raycast/README.md`.
 
 What Raycast handles in this setup:
 - **Window tiling** (Settings → Window Management): half/quarter splits, full-screen, throw-to-display, etc. Avoid colliding with Ghostty (`Cmd+D`/`Cmd+Shift+D` splits).
 - **Application launching** (`Option+Space` is the default; rebind in Settings → General if you want).
 - **Clipboard history**, snippets, calculator, system commands.
 
-No config file lives in this repo — set everything up in Raycast's UI on first launch.
+Anything not in the plist gets set up in Raycast's UI on first launch.
 
 ### JankyBorders (focus ring)
 
@@ -226,12 +235,9 @@ Bootstrap option 8 installs the service. Border thickness, colors, and the black
 
 ### AltTab (window switcher)
 
-[AltTab](https://github.com/lwouis/alt-tab-macos) replaces macOS's stock Cmd+Tab with a Windows-style switcher that lists every window across every Space. Open `AltTab → Preferences` after first launch and turn on:
+[AltTab](https://github.com/lwouis/alt-tab-macos) replaces macOS's stock Cmd+Tab with a Windows-style switcher that lists every window across every Space. Settings restore from `alttab/com.lwouis.alt-tab-macos.plist` (telemetry keys stripped) — quit AltTab first or the import is skipped. See `mac/alttab/README.md`.
 
-- **Show windows from all spaces**
-- **Start at login**
-
-Default trigger is **Cmd+Tab** (it overrides the system one). All other defaults are sane.
+Default trigger is **Cmd+Tab** (it overrides the system one).
 
 ### Git
 
@@ -253,7 +259,7 @@ The `macos-defaults.sh` script applies these developer-friendly settings:
 - **Dock:** Auto-hide with no delay, no recent apps, small icons
 - **Mission Control:** Don't rearrange spaces, fast animations
 - **Screenshots:** Save to `~/Screenshots` as PNG, no shadow
-- **Trackpad:** Tap to click, three-finger drag
+- **Trackpad:** Tap to click
 
 ---
 
@@ -343,13 +349,35 @@ Customize in `mac/claude/statusline.sh`. The script caches `git`/`kubectl` looku
 
 The included `~/.claude/settings.json` pre-allows safe read-only Bash commands (git status, kubectl get, ls, cat, rg, etc.) so you don't get permission prompts for them.
 
+`restore_configs()` (option 3) also restores `agents/`, `commands/`, `hooks/`, `output-styles/`, `rules/`, `skills/` and `settings.personal.json` into `~/.claude/`.
+
+**Secrets are scrubbed in-repo:** `ANTHROPIC_AUTH_TOKEN` is `REPLACE_ME_BEFORE_USE` and both `mcpServers` blocks are emptied — they must be re-entered by hand. Full map of what lands where, plus the plugin/marketplace list, is in **`mac/claude/RESTORE-NOTES.md`** and `mac/claude/plugins.md`.
+
+---
+
+## Secret scanning
+
+`.pre-commit-config.yaml` at the repo root runs [gitleaks](https://github.com/gitleaks/gitleaks) on every commit. This repo tracks real dotfiles, so keep it on:
+
+```bash
+brew install pre-commit && pre-commit install
+gitleaks detect --no-git   # working tree
+gitleaks detect            # full history
+```
+
+---
+
+## Handing this machine back
+
+See **`HANDBACK.md`** at the repo root — credential rotation, what to export before a wipe, and what to sign out of.
+
 ---
 
 ## What's new in the 2026 refresh
 
 - **Window mgmt:** Raycast (tiling + shortcuts) + JankyBorders (8px focus ring) + AltTab (Cmd+Tab replacement)
 - **Containers/K8s:** Rancher Desktop replaces Docker Desktop (open source, integrated K8s)
-- **No tmux:** removed — workflow uses Ghostty splits when terminal multiplexing is needed
+- **tmux:** not installed — workflow uses Ghostty splits; `configs/tmux/tmux.conf` is kept for portability only
 - **Safe rm:** `rm` now trashes to `~/.local/share/trash/<ts>/`; added `unrm` + `trash-clean`
 - **Zsh:** turbo-loading; switched to `fast-syntax-highlighting`; added `zsh-history-substring-search`, `you-should-use`, `forgit`, OMZ completion snippets for kubectl/helm/tf/aws/docker/gcloud
 - **Brewfile:** added `tlrc`, `mkcert`, `gum`, `just`, `dust`, `duf`, `procs`, `bottom`, `xh`, `fx`, `glow`, `yamllint`, `git-absorb`, `kubescape`, `kubecolor`, `helm-docs`, `kustomize`, `kind`, `helmfile`, `flux`

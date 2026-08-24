@@ -34,9 +34,11 @@ defaults write com.apple.dock autohide-delay -float 0
 defaults write com.apple.dock autohide-time-modifier -float 0.3
 defaults write com.apple.dock minimize-to-application -bool true
 defaults write com.apple.dock show-recents -bool false
-defaults write com.apple.dock tilesize -int 48
+defaults write com.apple.dock tilesize -int 51
 defaults write com.apple.dock mru-spaces -bool false                      # don't rearrange spaces
 defaults write com.apple.dock expose-animation-duration -float 0.1
+defaults write com.apple.dock wvous-br-corner -int 14                     # bottom-right hot corner = Quick Note
+defaults write com.apple.dock wvous-br-modifier -int 0
 
 # ---- Screenshots ----
 mkdir -p "${HOME}/Screenshots"
@@ -49,11 +51,19 @@ defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool
 # Three-finger drag intentionally NOT set — enabling it reassigns 3-finger swipes
 # from Mission Control/spaces to drag, which breaks the default gesture muscle memory.
 
+# ---- Appearance ----
+defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
+
+# ---- Menu bar clock ----
+defaults write com.apple.menuextra.clock ShowDate -int 0
+defaults write com.apple.menuextra.clock ShowAMPM -int 1
+defaults write com.apple.menuextra.clock ShowDayOfWeek -int 1
+
 # ---- Misc ----
 defaults write com.apple.LaunchServices LSQuarantine -bool false          # no "open app?" dialog
 defaults write com.apple.TextEdit RichText -int 0                         # plain text default
 defaults write com.apple.ActivityMonitor ShowCategory -int 0              # show all processes
 
 # ---- Apply ----
-killall Finder Dock SystemUIServer 2>/dev/null || true
+killall Finder Dock SystemUIServer ControlCenter 2>/dev/null || true
 echo "macOS defaults applied. Some changes need a logout/restart."

@@ -40,11 +40,13 @@ PASS/FAIL **verify** section. Every step is idempotent (`command -v` / list chec
 The new flow prefers the curated `install/gnome-setup.sh` over restoring an old backup.
 
 ### macOS side (`mac/`)
-**Entry point:** `mac/bootstrap.sh` — numbered menu 0–11, each option calls a function (no flag-based sourcing like the Ubuntu side). Option 11 = "Run ALL" in dependency order: homebrew → packages → configs → defaults → zinit → krew → claude → borders → safe-rm.
+**Entry point:** `mac/bootstrap.sh` — numbered menu 0–12, each option calls a function (no flag-based sourcing like the Ubuntu side). Option 12 = "Run ALL" (steps 1–10) in dependency order: homebrew → packages → configs → defaults → zinit → krew → claude → borders → safe-rm → gcloud. Option 11 (cleanup orphaned packages) is deliberately excluded from Run ALL — it is opt-in and destructive.
 
 **Tool installation:** declarative via `mac/Brewfile` (`brew bundle`). No per-category install scripts — everything is one Brewfile.
 
-**Config layout:** topic dirs (`mac/zsh/`, `mac/nvim/`, `mac/aerospace/`, `mac/ghostty/`, `mac/claude/`, `mac/configs/`). `restore_configs()` copies (not symlinks) to `~/.config/` and `~`.
+**Config layout:** topic dirs (`mac/zsh/`, `mac/nvim/`, `mac/ghostty/`, `mac/aerospace/`, `mac/alttab/`, `mac/raycast/`, `mac/claude/`, `mac/configs/{borders,tmux,gh,atuin}/`). `restore_configs()` copies (not symlinks) to `~/.config/` and `~`. `mac/alttab/` and `mac/raycast/` are `defaults import` plists, not file copies — the import is skipped while the app is running.
+
+**Claude Code config:** `mac/claude/` restores to `~/.claude/` — `settings.json` + `settings.personal.json` + `statusline.sh` by direct `cp`, then `agents commands hooks output-styles rules skills` via the `for sub in …` loop in `restore_configs()`. `plugins.md` and `RESTORE-NOTES.md` are docs and must NOT be copied into `~/.claude`. Secrets (`ANTHROPIC_AUTH_TOKEN`, `mcpServers`) are scrubbed in-repo — see `mac/claude/RESTORE-NOTES.md`.
 
 **Cross-platform configs:** `mac/bootstrap.sh` reads `${SCRIPT_DIR}/../configs/btop/` from the top-level `configs/` dir — that's the single source of truth for the btop theme on both OSes.
 
@@ -91,6 +93,8 @@ nvim --headless --clean \
 - **Ubuntu only:** before every `apt update`, clear cache to prevent corruption: `sudo rm -rf /var/cache/apt/*.bin 2>/dev/null || true`
 - Idempotency: every install step checks `if ! command -v <tool> &>/dev/null; then` before installing
 - Downloads go to `/tmp/`, cleaned up after install
+- **Secret scanning:** `.pre-commit-config.yaml` runs the `gitleaks` hook. `gitleaks` is in both Brewfiles; activate with `pre-commit install`. This repo tracks real dotfiles, so scan before committing anything new: `gitleaks detect --no-git` (working tree) and `gitleaks detect` (history).
+- `HANDBACK.md` is the machine hand-back checklist (credential rotation, what to export). Keep it current when new untracked state appears.
 
 ## Gotchas
 

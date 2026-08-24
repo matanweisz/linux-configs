@@ -89,6 +89,11 @@ brew "kind"               # local K8s clusters in Docker
 brew "helmfile"           # declarative helm releases
 brew "fluxcd/tap/flux"    # Flux GitOps CLI
 
+# ---- Misc CLI ----
+brew "docker"             # Docker CLI (Rancher Desktop cask below provides the daemon)
+brew "shellcheck"         # used by this repo's own shell script validation
+brew "uv"                 # Python tool runner (powers graphify)
+
 # =============================================================================
 # GUI Applications
 # =============================================================================
@@ -104,3 +109,19 @@ cask "bitwarden"
 cask "spotify"
 cask "stats"              # menu bar system monitor
 cask "font-jetbrains-mono-nerd-font"
+cask "android-studio"
+cask "android-commandlinetools"
+cask "android-platform-tools"
+cask "codex"               # OpenAI Codex CLI
+
+# ---- VS Code extensions ----
+vscode "mechatroner.rainbow-csv"
+vscode "saoudrizwan.claude-dev"
+
+# =============================================================================
+# Non-brew globals (installed manually, not managed by this Brewfile)
+# =============================================================================
+# npm -g @google/gemini-cli
+# npm -g @higgsfield/cli
+# uv tool install graphifyy
+# wimlib — one-off manual install, intentionally not tracked here

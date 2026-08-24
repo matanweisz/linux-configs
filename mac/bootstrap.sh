@@ -70,7 +70,7 @@ install_packages() {
 restore_configs() {
     log_info "Restoring configs..."
 
-    mkdir -p ~/.config/{ghostty,nvim,borders}
+    mkdir -p ~/.config/{ghostty,nvim,borders,aerospace,tmux,gh,atuin}
     mkdir -p ~/.claude
 
     cp "${SCRIPT_DIR}/configs/starship.toml"   ~/.config/starship.toml
@@ -82,27 +82,38 @@ restore_configs() {
     cp "${SCRIPT_DIR}/nvim/init.lua"           ~/.config/nvim/init.lua
     cp "${SCRIPT_DIR}/configs/borders/bordersrc" ~/.config/borders/bordersrc
     chmod +x ~/.config/borders/bordersrc
+    cp "${SCRIPT_DIR}/aerospace/aerospace.toml"  ~/.config/aerospace/aerospace.toml
+    cp "${SCRIPT_DIR}/configs/tmux/tmux.conf"    ~/.config/tmux/tmux.conf
+    cp "${SCRIPT_DIR}/configs/gh/config.yml"     ~/.config/gh/config.yml
+    cp "${SCRIPT_DIR}/configs/atuin/config.toml" ~/.config/atuin/config.toml
 
-    cp "${SCRIPT_DIR}/claude/settings.json"    ~/.claude/settings.json
-    cp "${SCRIPT_DIR}/claude/statusline.sh"    ~/.claude/statusline.sh
-    chmod +x ~/.claude/statusline.sh
-
-    # Claude Code: CLAUDE.md + agents/commands/hooks/output-styles/rules
-    if [[ -f "${SCRIPT_DIR}/claude/CLAUDE.md" ]]; then
-        cp "${SCRIPT_DIR}/claude/CLAUDE.md" ~/.claude/CLAUDE.md
-    fi
-    for sub in agents commands hooks output-styles rules; do
-        if [[ -d "${SCRIPT_DIR}/claude/${sub}" ]]; then
-            mkdir -p "$HOME/.claude/${sub}"
-            cp -R "${SCRIPT_DIR}/claude/${sub}/." "$HOME/.claude/${sub}/"
+    # Claude Code: same CLAUDE.md + statusline + agents/commands/hooks/output-styles/rules/skills
+    # into both profiles. ~/.claude = work (default), ~/.claude-personal = personal
+    # (selected by the `claude-personal` alias via CLAUDE_CONFIG_DIR).
+    for profile in "$HOME/.claude" "$HOME/.claude-personal"; do
+        mkdir -p "$profile"
+        cp "${SCRIPT_DIR}/claude/statusline.sh" "$profile/statusline.sh"
+        chmod +x "$profile/statusline.sh"
+        if [[ -f "${SCRIPT_DIR}/claude/CLAUDE.md" ]]; then
+            cp "${SCRIPT_DIR}/claude/CLAUDE.md" "$profile/CLAUDE.md"
         fi
+        for sub in agents commands hooks output-styles rules skills; do
+            if [[ -d "${SCRIPT_DIR}/claude/${sub}" ]]; then
+                mkdir -p "${profile}/${sub}"
+                cp -R "${SCRIPT_DIR}/claude/${sub}/." "${profile}/${sub}/"
+            fi
+        done
+        # Hooks must be executable
+        chmod +x "${profile}/hooks/"*.sh 2>/dev/null || true
     done
-    # Hooks must be executable
-    if [[ -d "$HOME/.claude/hooks" ]]; then
-        chmod +x "$HOME/.claude/hooks/"*.sh 2>/dev/null || true
-    fi
-    if grep -q "REPLACE_ME_BEFORE_USE" ~/.claude/settings.json 2>/dev/null; then
-        log_warn "Claude settings.json has placeholder ANTHROPIC_AUTH_TOKEN — set it before launching claude"
+
+    # Per-profile settings
+    cp "${SCRIPT_DIR}/claude/settings.json"                 ~/.claude/settings.json
+    cp "${SCRIPT_DIR}/claude/settings.personal.json"        ~/.claude/settings.personal.json
+    cp "${SCRIPT_DIR}/claude/settings.claude-personal.json" ~/.claude-personal/settings.json
+
+    if grep -q "REPLACE_ME" ~/.claude/settings.json ~/.claude-personal/settings.json 2>/dev/null; then
+        log_warn "Claude settings have REPLACE_ME placeholders (auth token / base URL) — see mac/claude/RESTORE-NOTES.md"
     fi
 
     # btop config from linux-configs if available
@@ -120,6 +131,16 @@ restore_configs() {
         else
             defaults import com.raycast.macos "${SCRIPT_DIR}/raycast/com.raycast.macos.plist"
             log_success "Raycast defaults restored (snippets/quicklinks need .rayconfig — see mac/raycast/README.md)"
+        fi
+    fi
+
+    # AltTab defaults (see mac/alttab/README.md)
+    if [[ -f "${SCRIPT_DIR}/alttab/com.lwouis.alt-tab-macos.plist" ]]; then
+        if pgrep -xq AltTab; then
+            log_warn "AltTab is running — skipping defaults import (quit AltTab then re-run option 3)"
+        else
+            defaults import com.lwouis.alt-tab-macos "${SCRIPT_DIR}/alttab/com.lwouis.alt-tab-macos.plist"
+            log_success "AltTab defaults restored"
         fi
     fi
 
