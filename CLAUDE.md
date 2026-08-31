@@ -38,10 +38,13 @@ to the Mac); GUI apps from apt/deb/snap (casks are macOS-only); Docker Engine + 
 - `desktop-apps.sh` — Ghostty (PPA), VS Code, Chrome, Slack, WhatsApp, drawio, Standard Notes, Beekeeper, OpenLens
 - `launcher.sh` — Vicinae binary + GNOME companion extension + Super+Space keybind
 - `gnome-setup.sh` — gsettings tweaks (macos-defaults equivalents) + Tiling Shell + JetBrains Mono Nerd Font
-- `claude.sh` — Claude Code native install + sanitized config into `~/.claude`. Copies
-  `claude/{CLAUDE.md,statusline.sh,settings.json}` and `agents commands hooks output-styles rules`,
-  then copies **`mac/claude/skills/`** into `~/.claude/skills` — skills are shared, not duplicated
-  under `claude/`
+- `claude.sh` — Claude Code native install + sanitized config into **both** profiles
+  (`~/.claude` and `~/.claude-personal`, mirroring the mac side). Copies
+  `claude/{CLAUDE.md,statusline.sh}` and `agents commands hooks output-styles rules` into each,
+  plus **`mac/claude/skills/`** — skills are shared, not duplicated under `claude/`. Settings go
+  one per target: `settings.json` → `~/.claude/settings.json`, `settings.personal.json` →
+  `~/.claude/settings.personal.json`, `settings.claude-personal.json` →
+  `~/.claude-personal/settings.json`
 - `restore-configs.sh` — copies dotfiles (zsh/ghostty/nvim/starship/git/btop) with timestamped backups
 
 Each `install/*.sh` is **independently runnable** (standalone log-helper fallback) and ends with a

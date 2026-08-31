@@ -154,11 +154,13 @@ direction, then commit on a branch.
 | `~/.claude/{agents,commands,hooks,output-styles,rules}/` | same, per OS |
 | `~/.claude/skills/` | `mac/claude/skills/` — **single source for both OSes** |
 | `~/.claude/settings.json` | `mac/claude/settings.json` · `claude/settings.json` |
-| `~/.claude/settings.personal.json` | `mac/claude/settings.personal.json` |
-| `~/.claude-personal/settings.json` | `mac/claude/settings.claude-personal.json` |
+| `~/.claude/settings.personal.json` | `mac/claude/settings.personal.json` · `claude/settings.personal.json` |
+| `~/.claude-personal/settings.json` | `mac/claude/settings.claude-personal.json` · `claude/settings.claude-personal.json` |
 
-Ubuntu's `install/claude.sh` copies `mac/claude/skills/` into `~/.claude/skills` — skills
-are deliberately not duplicated under `claude/`.
+Both OSes populate **both** profiles (`~/.claude` and `~/.claude-personal`) — Ubuntu via
+`install/claude.sh`, macOS via `restore_configs()`. `install/claude.sh` copies
+`mac/claude/skills/` into each profile's `skills/` — skills are deliberately not duplicated
+under `claude/`.
 
 **Before committing any settings file, empty every `mcpServers` block** — that's where
 tokens live:

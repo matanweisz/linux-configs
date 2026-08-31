@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
 # Claude Code: native install + sanitized config (settings, statusline, hooks,
-# agents, commands, rules, output-styles). User-level (no sudo).
+# agents, commands, rules, output-styles, skills) into both profiles
+# (~/.claude and ~/.claude-personal). User-level (no sudo).
 # Sourced by bootstrap.sh (inherits log_* helpers) or runnable standalone.
 #
 
@@ -36,44 +37,63 @@ else
 fi
 
 # ---- Restore sanitized config ----
-log_info "Installing Claude config to ~/.claude ..."
-mkdir -p "$HOME/.claude"
+# Same CLAUDE.md + statusline + agents/commands/hooks/output-styles/rules/skills into
+# both profiles. ~/.claude = default, ~/.claude-personal = second profile (selected by
+# the `claude-personal` alias via CLAUDE_CONFIG_DIR).
+log_info "Installing Claude config to ~/.claude and ~/.claude-personal ..."
 
+for profile in "$HOME/.claude" "$HOME/.claude-personal"; do
+    mkdir -p "$profile"
+
+    cp "$SRC/statusline.sh" "$profile/statusline.sh"
+    chmod +x "$profile/statusline.sh"
+
+    [[ -f "$SRC/CLAUDE.md" ]] && cp "$SRC/CLAUDE.md" "$profile/CLAUDE.md"
+
+    for sub in agents commands hooks output-styles rules; do
+        if [[ -d "$SRC/$sub" ]]; then
+            mkdir -p "$profile/$sub"
+            cp -R "$SRC/$sub/." "$profile/$sub/"
+        fi
+    done
+    # Skills are shared with the macOS stack (only copy that exists in the repo).
+    if [[ -d "$REPO_DIR/mac/claude/skills" ]]; then
+        mkdir -p "$profile/skills"
+        cp -R "$REPO_DIR/mac/claude/skills/." "$profile/skills/"
+    fi
+    chmod +x "$profile"/hooks/*.sh 2>/dev/null || true
+done
+
+# Per-profile settings
 backup_if_exists "$HOME/.claude/settings.json"
 cp "$SRC/settings.json" "$HOME/.claude/settings.json"
+backup_if_exists "$HOME/.claude/settings.personal.json"
+cp "$SRC/settings.personal.json" "$HOME/.claude/settings.personal.json"
+backup_if_exists "$HOME/.claude-personal/settings.json"
+cp "$SRC/settings.claude-personal.json" "$HOME/.claude-personal/settings.json"
 
-cp "$SRC/statusline.sh" "$HOME/.claude/statusline.sh"
-chmod +x "$HOME/.claude/statusline.sh"
-
-[[ -f "$SRC/CLAUDE.md" ]] && cp "$SRC/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
-
-for sub in agents commands hooks output-styles rules; do
-    if [[ -d "$SRC/$sub" ]]; then
-        mkdir -p "$HOME/.claude/$sub"
-        cp -R "$SRC/$sub/." "$HOME/.claude/$sub/"
-    fi
-done
-# Skills are shared with the macOS stack (only copy that exists in the repo).
-if [[ -d "$REPO_DIR/mac/claude/skills" ]]; then
-    mkdir -p "$HOME/.claude/skills"
-    cp -R "$REPO_DIR/mac/claude/skills/." "$HOME/.claude/skills/"
-fi
-chmod +x "$HOME"/.claude/hooks/*.sh 2>/dev/null || true
 log_success "Claude config installed (sanitized — standard Anthropic login)"
 
 # ---- Verify ----
 log_info "Verifying Claude Code setup..."
 ok=1
 command -v claude &>/dev/null && log_success "  claude on PATH" || { log_warn "  claude not on PATH"; ok=0; }
-if command -v jq &>/dev/null && jq -e . "$HOME/.claude/settings.json" >/dev/null 2>&1; then
-    log_success "  settings.json is valid JSON"
-else
-    log_warn "  settings.json failed JSON validation"; ok=0
-fi
+for s in "$HOME/.claude/settings.json" "$HOME/.claude/settings.personal.json" "$HOME/.claude-personal/settings.json"; do
+    if command -v jq &>/dev/null && jq -e . "$s" >/dev/null 2>&1; then
+        log_success "  valid JSON: $s"
+    else
+        log_warn "  failed JSON validation: $s"; ok=0
+    fi
+done
 if bash "$HOME/.claude/statusline.sh" </dev/null >/dev/null 2>&1; then
     log_success "  statusline.sh runs"
 else
     log_warn "  statusline.sh exited non-zero (often fine without a live session payload)"
 fi
-for h in "$HOME"/.claude/hooks/*.sh; do [[ -x "$h" ]] || { log_warn "  not executable: $h"; ok=0; }; done
+for profile in "$HOME/.claude" "$HOME/.claude-personal"; do
+    for sub in agents commands hooks output-styles rules skills; do
+        [[ -d "$profile/$sub" ]] || { log_warn "  missing: $profile/$sub"; ok=0; }
+    done
+    for h in "$profile"/hooks/*.sh; do [[ -x "$h" ]] || { log_warn "  not executable: $h"; ok=0; }; done
+done
 (( ok == 1 )) && log_success "VERIFY PASS: Claude Code configured" || log_warn "VERIFY: see warnings above"
