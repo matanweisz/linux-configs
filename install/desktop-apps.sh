@@ -27,7 +27,8 @@ sudo apt-get install -y wl-clipboard xclip libnotify-bin unzip \
 log_success "apt essentials installed"
 
 # ============================================
-# GHOSTTY (maintained PPA — supports Ubuntu 24.04)
+# GHOSTTY (maintained PPA — publishes for the current Ubuntu releases, 26.04
+# included; if the PPA ever lags, `apt install ghostty` from the 26.04 archive works)
 # ============================================
 log_info "Installing Ghostty..."
 if ! command -v ghostty &>/dev/null; then
@@ -84,6 +85,7 @@ install_snap beekeeper-studio
 
 # ============================================
 # OpenLens (Kubernetes IDE) — GitHub release .deb
+# Unmaintained (last release 2023); k9s (Brewfile) covers the same workflow.
 # ============================================
 log_info "Installing OpenLens..."
 if ! command -v open-lens &>/dev/null && ! dpkg -l 2>/dev/null | grep -qi openlens; then
