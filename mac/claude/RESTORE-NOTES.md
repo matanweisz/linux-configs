@@ -25,7 +25,8 @@ Everything except `settings.json` is identical between the two — bootstrap cop
 the same sources into both dirs, and only the settings file differs per profile.
 
 The Ubuntu-side `claude/` dir mirrors the same content, adapted for Linux — minus
-`skills/`, which it pulls from here (see **Skills** below).
+`skills/`, which it pulls from here (see **Skills** below). It carries the same three
+settings files and `install/claude.sh` populates both profiles the same way.
 
 ## File map
 
@@ -61,7 +62,7 @@ animation/design set (`animation-vocabulary`, `find-animation-opportunities`, th
 it alongside the dirs.
 
 Skills are OS-agnostic and this is the **single source for both OSes**. Ubuntu's
-`install/claude.sh` already copies this directory into `~/.claude/skills/` — no manual
+`install/claude.sh` already copies this directory into both profiles' `skills/` — no manual
 step needed. They are deliberately NOT duplicated under the top-level `claude/`; if you
 add or update a skill, do it here.
 

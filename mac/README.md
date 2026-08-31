@@ -358,7 +358,7 @@ The included `~/.claude/settings.json` pre-allows safe read-only Bash commands (
 
 `restore_configs()` (option 3) populates **both** profiles — `~/.claude` (default) and `~/.claude-personal` (used by the `claude-personal` alias) — with `CLAUDE.md`, `statusline.sh`, and `agents/`, `commands/`, `hooks/`, `output-styles/`, `rules/`, `skills/`. Settings go one per target: `settings.json` and `settings.personal.json` into `~/.claude/`, `settings.claude-personal.json` into `~/.claude-personal/settings.json`.
 
-`claude/skills/` is the **single source of skills for both OSes** — Ubuntu's `install/claude.sh` copies it into `~/.claude/skills`. Don't duplicate it under the top-level `claude/`.
+`claude/skills/` is the **single source of skills for both OSes** — Ubuntu's `install/claude.sh` copies it into both profiles' `skills/`. Don't duplicate it under the top-level `claude/`.
 
 **Secrets are scrubbed in-repo:** no auth tokens are tracked, and every `mcpServers` block is emptied — re-add MCP servers by hand after restore. Full map of what lands where, plus the plugin/marketplace list, is in **`mac/claude/RESTORE-NOTES.md`** and `mac/claude/plugins.md`.
 
