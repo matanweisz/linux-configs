@@ -86,8 +86,10 @@ restore_configs() {
     cp "${SCRIPT_DIR}/configs/.gitignore_global" ~/.gitignore_global
     cp "${SCRIPT_DIR}/zsh/.zshrc"              ~/.zshrc
     cp "${SCRIPT_DIR}/zsh/.zsh_aliases"        ~/.zsh_aliases
+    cp "${SCRIPT_DIR}/zsh/.zprofile"           ~/.zprofile
     cp "${SCRIPT_DIR}/ghostty/config"          ~/.config/ghostty/config
     cp "${SCRIPT_DIR}/nvim/init.lua"           ~/.config/nvim/init.lua
+    cp "${SCRIPT_DIR}/nvim/lazy-lock.json"     ~/.config/nvim/lazy-lock.json
     cp "${SCRIPT_DIR}/configs/borders/bordersrc" ~/.config/borders/bordersrc
     chmod +x ~/.config/borders/bordersrc
     cp "${SCRIPT_DIR}/aerospace/aerospace.toml"  ~/.config/aerospace/aerospace.toml

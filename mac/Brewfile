@@ -56,7 +56,7 @@ brew "trivy"              # vulnerability scanner
 
 # ---- Languages ----
 brew "go"
-brew "python@3.12"
+brew "python@3.12"        # python@3.14 seen on live machine is a transitive dep pull-in, not a direct need — skip
 brew "node"
 
 # ---- Editor ----
@@ -101,6 +101,8 @@ brew "pre-commit"         # git hook framework (README: `pre-commit install`)
 cask "ghostty"
 cask "visual-studio-code"
 cask "rancher"            # Rancher Desktop (Kubernetes + container management)
+cask "virtualbox"         # VM hypervisor (Vagrant provider)
+cask "hashicorp/tap/hashicorp-vagrant"  # tap-qualified: lives in hashicorp/tap, not core
 cask "raycast"            # launcher, window tiling, keyboard shortcuts
 cask "alt-tab"            # keyboard window switcher (Cmd+Tab replacement)
 cask "google-chrome"
