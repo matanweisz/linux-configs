@@ -55,6 +55,7 @@ fi
 # ---- Terminal / editor / prompt ----
 copy_cfg "$REPO_DIR/ghostty/config"     "$HOME/.config/ghostty/config"
 copy_cfg "$REPO_DIR/nvim/init.lua"      "$HOME/.config/nvim/init.lua"
+copy_cfg "$REPO_DIR/nvim/lazy-lock.json" "$HOME/.config/nvim/lazy-lock.json"
 copy_cfg "$REPO_DIR/configs/starship.toml" "$HOME/.config/starship.toml"
 
 # ---- Git ----
