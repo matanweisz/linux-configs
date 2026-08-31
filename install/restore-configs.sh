@@ -62,6 +62,11 @@ copy_cfg "$REPO_DIR/configs/starship.toml" "$HOME/.config/starship.toml"
 copy_cfg "$REPO_DIR/configs/.gitconfig"        "$HOME/.gitconfig"
 copy_cfg "$REPO_DIR/configs/.gitignore_global" "$HOME/.gitignore_global"
 
+# ---- gh / atuin / tmux ----
+copy_cfg "$REPO_DIR/configs/gh/config.yml"     "$HOME/.config/gh/config.yml"
+copy_cfg "$REPO_DIR/configs/atuin/config.toml" "$HOME/.config/atuin/config.toml"
+copy_cfg "$REPO_DIR/configs/tmux/tmux.conf"    "$HOME/.config/tmux/tmux.conf"
+
 # ---- btop ----
 if [[ -f "$REPO_DIR/configs/btop/btop.conf" ]]; then
     mkdir -p "$HOME/.config/btop/themes"
@@ -89,5 +94,13 @@ mkdir -p "$HOME/ssh_keys" && chmod 700 "$HOME/ssh_keys"
 
 # ---- safe-rm trash dir ----
 mkdir -p "$HOME/.local/share/trash"
+
+# ============================================
+# Verify
+# ============================================
+log_info "Verifying restored configs..."
+[[ -f "$HOME/.config/gh/config.yml" ]] && log_success "  gh config present" || log_warn "  gh config missing"
+[[ -f "$HOME/.config/atuin/config.toml" ]] && log_success "  atuin config present" || log_warn "  atuin config missing"
+[[ -f "$HOME/.config/tmux/tmux.conf" ]] && log_success "  tmux config present" || log_warn "  tmux config missing"
 
 log_success "Configuration restore complete"

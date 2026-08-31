@@ -4,6 +4,10 @@
 # from apt/deb/snap here. Selection mirrors the user's daily set:
 #   Ghostty, VS Code, Chrome, Slack, WhatsApp, drawio, Standard Notes,
 #   Beekeeper Studio, OpenLens. (Spotify/Bitwarden intentionally skipped.)
+#   Also intentionally skipped: Android Studio + Android tooling (no active
+#   need on this stack), the codex CLI cask (not part of this workflow), and
+#   the Stats menubar app (no GNOME analog configured — btop covers CLI
+#   monitoring). Decisions, not oversights.
 # Sourced by bootstrap.sh (inherits log_* helpers) or runnable standalone.
 #
 
