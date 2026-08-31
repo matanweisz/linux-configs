@@ -117,16 +117,20 @@ install_tiling_shell() {
     log_success "Tiling Shell already installed"
   else
     log_info "Installing Tiling Shell..."
-    local url tmp
-    # Pick the current-GNOME asset (the bare uuid zip), not the legacy GNOME.42-44 one.
-    url="$(curl -fsSL https://api.github.com/repos/domferr/tilingshell/releases/latest 2>/dev/null \
-      | jq -r '.assets[]|select(.name|test("^tilingshell@ferrarodomenico.com\\.zip$")).browser_download_url' 2>/dev/null | head -1 || true)"
-    if [[ -z "$url" || "$url" == "null" ]]; then
-      log_warn "Tiling Shell install skipped (GitHub API unavailable)"
+    local sv path tmp
+    # Fetch from extensions.gnome.org, not GitHub `releases/latest`: the GitHub zip
+    # carries one metadata.json whose shell-version list lags the current GNOME
+    # (17.3 stops at 49, so GNOME 50 refuses to load it). The site API returns the
+    # build matched to the running shell. pk=7065 = Tiling Shell.
+    sv="$(gnome-shell --version 2>/dev/null | grep -oE '[0-9]+' | head -1 || true)"
+    path="$(curl -fsSL "https://extensions.gnome.org/extension-info/?pk=7065&shell_version=$sv" 2>/dev/null \
+      | jq -r '.download_url // empty' 2>/dev/null || true)"
+    if [[ -z "$path" || "$path" == "null" ]]; then
+      log_error "No Tiling Shell build for GNOME ${sv:-unknown} on extensions.gnome.org — skipping"
       return 0
     fi
     tmp="$(mktemp -d)"
-    curl -fsSL "$url" -o "$tmp/tilingshell.zip"
+    curl -fsSL "https://extensions.gnome.org$path" -o "$tmp/tilingshell.zip"
     gnome-extensions install --force "$tmp/tilingshell.zip" && log_success "Tiling Shell installed"
     rm -rf "$tmp"
   fi
@@ -165,10 +169,17 @@ verify_gnome() {
   echo "  key repeat-interval : $(gsettings get org.gnome.desktop.peripherals.keyboard repeat-interval 2>/dev/null)"
   echo "  tap-to-click        : $(gsettings get org.gnome.desktop.peripherals.touchpad tap-to-click 2>/dev/null)"
   echo "  color-scheme        : $(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)"
-  if ext_installed "$TILING_UUID"; then
-    log_success "  Tiling Shell installed (enables on next login)"
-  else
+  # On disk is not enough — a metadata.json the running shell rejects (wrong
+  # shell-version) still leaves the file there. Ask the shell for its state.
+  if ! ext_installed "$TILING_UUID"; then
     log_warn "  Tiling Shell not installed"
+  else
+    local state
+    state="$(gnome-extensions info "$TILING_UUID" 2>/dev/null | awk -F': ' '/State:/{print $2; exit}' || true)"
+    case "$state" in
+      ENABLED* | ACTIVE*) log_success "  Tiling Shell $state" ;;
+      *) log_warn "  Tiling Shell installed but state is '${state:-unknown}' — logout/login to activate (OUT OF DATE = no build for this GNOME)" ;;
+    esac
   fi
   fc-cache -f >/dev/null 2>&1 || true # ensure the cache reflects a just-installed font
   if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd Font" \

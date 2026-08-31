@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Vicinae — native, Raycast-compatible launcher (Raycast replacement)
-#   - installs the vicinae binary to ~/.local/bin (latest GitHub release)
+#   - installs vicinae into ~/.local via upstream's installer (self-contained AppImage)
 #   - installs + enables the GNOME companion extension (vicinae@dagimg-dot)
 #   - runs vicinae as a systemd --user service
 #   - binds Super+Space to `vicinae toggle` (Raycast was Option+Space)
@@ -24,6 +24,9 @@ if ! declare -F log_info >/dev/null 2>&1; then
 fi
 
 VICINAE_UUID="vicinae@dagimg-dot"
+VICINAE_PREFIX="$HOME/.local"
+# Installer layout: $PREFIX/lib/vicinae is the extracted AppImage root.
+VICINAE_INPUT_SERVER="$VICINAE_PREFIX/lib/vicinae/usr/libexec/vicinae/vicinae-input-server"
 export PATH="$HOME/.local/bin:$PATH"
 
 # True if an extension is present on disk (reliable on Wayland, unlike
@@ -54,49 +57,38 @@ PY
   fi
 }
 
-# ---- 1. Install vicinae binary ----
+# ---- 1. Install vicinae ----
+# Upstream's installer extracts the self-contained AppImage, which bundles the Qt 6
+# runtime and the libexec/ daemons (vicinae-server, -input-server, -file-indexer,
+# -browser-link, -data-control-server). The plain tarball ships neither, so on a
+# stock GNOME desktop (no Qt6) the server died on libQt6Core.so.6.
+# PREFIX keeps everything user-level — the installer only escalates when it can't
+# write to $PREFIX/bin, hence the mkdir first.
 install_vicinae_binary() {
   if command -v vicinae &>/dev/null; then
     log_success "vicinae already installed ($(vicinae --version 2>/dev/null | head -1))"
     return 0
   fi
-  log_info "Installing vicinae (latest GitHub release)..."
-  mkdir -p "$HOME/.local/bin"
-  local url tmp
-  url="$(curl -fsSL https://api.github.com/repos/vicinaehq/vicinae/releases/latest 2>/dev/null \
-    | jq -r '.assets[]|select(.name|test("linux-x86_64.*tar\\.gz$")).browser_download_url' 2>/dev/null | head -1 || true)"
-  if [[ -z "$url" || "$url" == "null" ]]; then
-    log_warn "vicinae install skipped (GitHub API unavailable)"
-    return 0
-  fi
-  tmp="$(mktemp -d)"
-  curl -fsSL "$url" -o "$tmp/vicinae.tar.gz"
-  tar -xzf "$tmp/vicinae.tar.gz" -C "$tmp"
-  if [[ -d "$tmp/bin" ]]; then
-    # prefix-style tarball (bin/ lib/ share/) -> install into ~/.local
-    cp -a "$tmp/bin/." "$HOME/.local/bin/"
-    [[ -d "$tmp/lib" ]] && {
-      mkdir -p "$HOME/.local/lib"
-      cp -a "$tmp/lib/." "$HOME/.local/lib/"
-    }
-    [[ -d "$tmp/share" ]] && {
-      mkdir -p "$HOME/.local/share"
-      cp -a "$tmp/share/." "$HOME/.local/share/"
-    }
-  else
-    local bin
-    bin="$(find "$tmp" -type f -name vicinae | head -1)"
-    [[ -n "$bin" ]] && cp "$bin" "$HOME/.local/bin/vicinae"
-  fi
-  chmod +x "$HOME/.local/bin/vicinae" 2>/dev/null || true
-  rm -rf "$tmp"
-  command -v vicinae &>/dev/null && log_success "vicinae installed" || {
-    log_warn "vicinae install failed"
+  command -v jq &>/dev/null || {
+    log_warn "vicinae install skipped (installer needs jq — run install/brew.sh first)"
     return 0
   }
+  log_info "Installing vicinae (upstream installer, PREFIX=$VICINAE_PREFIX)..."
+  mkdir -p "$VICINAE_PREFIX/bin"
+  if PREFIX="$VICINAE_PREFIX" bash <(curl -fsSL https://vicinae.com/install); then
+    log_success "vicinae installed"
+  else
+    log_warn "vicinae install failed"
+    return 0
+  fi
+  log_warn "One-time step for snippet expansion + paste (needs root, do it manually):"
+  log_warn "  sudo setcap cap_dac_override=ep $VICINAE_INPUT_SERVER"
 }
 
 # ---- 2. systemd --user service ----
+# The installer drops its own unit in $PREFIX/lib/systemd/user, which is NOT on
+# systemd's user unit search path for a ~/.local prefix — so we keep writing ours
+# to ~/.config/systemd/user (highest precedence anyway).
 setup_vicinae_service() {
   local unit="$HOME/.config/systemd/user/vicinae.service"
   if [[ ! -f "$unit" ]]; then
@@ -190,6 +182,14 @@ verify_launcher() {
     log_warn "  vicinae binary missing"
     ok=0
   }
+  # The binary alone is not proof of a working launcher — it used to pass while the
+  # server was crashing on a missing Qt runtime. Check the daemon actually runs.
+  if systemctl --user is-active --quiet vicinae.service 2>/dev/null; then
+    log_success "  vicinae.service active"
+  else
+    log_warn "  vicinae.service not active — first boot may not have started it; check:"
+    log_warn "    systemctl --user status vicinae.service"
+  fi
   if ext_installed "$VICINAE_UUID"; then
     log_success "  GNOME extension installed (enables on next login)"
   else
