@@ -27,6 +27,15 @@ shell-integration-features = no-cursor
 mouse-hide-while-typing = true
 copy-on-select = clipboard
 
+# Touchpad scroll damping. GNOME/Wayland has NO scroll-speed setting — the
+# org.gnome.desktop.peripherals.touchpad schema has no such key, and libinput
+# ships no scroll-factor quirk (only AttrTrackpointMultiplier, which is for
+# trackpoints). Scroll rate can therefore only be tuned per-application.
+# `precision` is the touchpad path (smooth/pixel scrolling); `discrete` is a
+# mouse-wheel notch, left at its default of 3. Linux-only: the Mac trackpad
+# does not need this, so mac/ghostty/config is intentionally not changed.
+mouse-scroll-multiplier = precision:0.4,discrete:3
+
 # ---- Keybindings (Linux: ctrl+shift instead of cmd) ----
 keybind = ctrl+shift+d=new_split:right
 keybind = ctrl+shift+e=new_split:down
