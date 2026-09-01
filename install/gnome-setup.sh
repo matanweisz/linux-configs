@@ -3,10 +3,18 @@
 # GNOME desktop tuning (the Linux equivalent of mac/macos-defaults.sh):
 #   - gsettings tweaks: fast key repeat, tap-to-click, dark mode, dock, nautilus
 #   - built-in half/maximize tiling keybindings (Super+arrows)
-#   - Tiling Shell extension (FancyZones-style layouts + advanced shortcuts)
+#   - desktop polish: dock favourites, monospace font, workspaces, input sources
 #   - JetBrains Mono Nerd Font (terminal/editor parity with the Mac)
-# All steps are user-level (no sudo). Wayland: enabling a freshly installed
-# extension may require a logout/login.
+#
+# Shell EXTENSIONS (Tiling Shell, Blur My Shell, TopHat, ...) are installed by
+# install/gnome-extensions.sh — this module only touches core GNOME schemas.
+#
+# ORDERING: must run AFTER install/launcher.sh. bind_vicinae_shortcut() there
+# clears switch-input-source to free Super+Space for Vicinae; apply_input_sources()
+# below then re-binds layout switching to Super+Shift+Space. Reverse the order and
+# the launcher wipes the binding.
+#
+# All steps are user-level (no sudo).
 # Sourced by bootstrap.sh (inherits log_* helpers) or runnable standalone.
 #
 
@@ -23,38 +31,21 @@ if ! declare -F log_info >/dev/null 2>&1; then
   log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 fi
 
-TILING_UUID="tilingshell@ferrarodomenico.com"
-
-# True if an extension is present on disk (reliable on Wayland, unlike
-# `gnome-extensions list` which only reflects the running shell until relogin).
-ext_installed() { [[ -f "$HOME/.local/share/gnome-shell/extensions/$1/metadata.json" ]]; }
-
-# Register a UUID in GNOME's enabled-extensions so it auto-enables on next login.
-register_extension() {
-  local uuid="$1"
-  command -v gsettings &>/dev/null || return 0
-  gnome-extensions enable "$uuid" 2>/dev/null || true
-  local cur new
-  cur="$(gsettings get org.gnome.shell enabled-extensions 2>/dev/null || echo '@as []')"
-  if command -v python3 &>/dev/null; then
-    new="$(
-      python3 - "$cur" "$uuid" <<'PY'
-import sys, ast
-cur, uuid = sys.argv[1].strip(), sys.argv[2]
-try: lst = ast.literal_eval(cur) if cur and cur != '@as []' else []
-except Exception: lst = []
-if uuid not in lst: lst.append(uuid)
-print("[" + ", ".join("'%s'" % x for x in lst) + "]")
-PY
-    )"
-    gsettings set org.gnome.shell enabled-extensions "$new" 2>/dev/null || true
-  fi
+# `producer | grep -q PATTERN` is a trap under `set -o pipefail`: grep -q exits at
+# the first match, the producer dies with SIGPIPE, and the pipeline reports 141 —
+# so the test reads FALSE precisely when the thing IS present. That is why every
+# bootstrap run re-downloaded the Nerd Font archive. grep -c drains its input.
+# Usage: <producer> | pipe_matches <grep-flags> <pattern>
+pipe_matches() {
+  local flags="$1" pattern="$2" n
+  n="$(grep -c "$flags" -- "$pattern" || true)"
+  [[ "${n:-0}" -gt 0 ]]
 }
 
 # Set a gsettings key only if its schema exists (avoids errors across versions).
 gset() {
   local schema="$1" key="$2" value="$3"
-  if gsettings list-schemas 2>/dev/null | grep -qx "$schema"; then
+  if gsettings list-schemas 2>/dev/null | pipe_matches -xF "$schema"; then
     gsettings set "$schema" "$key" "$value" 2>/dev/null \
       && return 0 || log_warn "  could not set $schema $key"
   fi
@@ -107,42 +98,80 @@ apply_tiling_keys() {
   log_success "Tiling shortcuts set (quarter-tiling + FancyZones via Tiling Shell prefs)"
 }
 
-# ---- 3. Tiling Shell extension (advanced layouts) ----
-install_tiling_shell() {
-  command -v gnome-extensions &>/dev/null || {
-    log_warn "gnome-extensions missing — skipping Tiling Shell"
-    return 0
-  }
-  if ext_installed "$TILING_UUID"; then
-    log_success "Tiling Shell already installed"
-  else
-    log_info "Installing Tiling Shell..."
-    local sv path tmp
-    # Fetch from extensions.gnome.org, not GitHub `releases/latest`: the GitHub zip
-    # carries one metadata.json whose shell-version list lags the current GNOME
-    # (17.3 stops at 49, so GNOME 50 refuses to load it). The site API returns the
-    # build matched to the running shell. pk=7065 = Tiling Shell.
-    sv="$(gnome-shell --version 2>/dev/null | grep -oE '[0-9]+' | head -1 || true)"
-    path="$(curl -fsSL "https://extensions.gnome.org/extension-info/?pk=7065&shell_version=$sv" 2>/dev/null \
-      | jq -r '.download_url // empty' 2>/dev/null || true)"
-    if [[ -z "$path" || "$path" == "null" ]]; then
-      log_error "No Tiling Shell build for GNOME ${sv:-unknown} on extensions.gnome.org — skipping"
-      return 0
-    fi
-    tmp="$(mktemp -d)"
-    curl -fsSL "https://extensions.gnome.org$path" -o "$tmp/tilingshell.zip"
-    gnome-extensions install --force "$tmp/tilingshell.zip" && log_success "Tiling Shell installed"
-    rm -rf "$tmp"
+# ---- 3. Desktop polish (scrolling, dock favourites, fonts, workspaces) ----
+# The old machine's favourite-apps list is deliberately NOT copied from
+# backup/gnome-backup-2026-01-20.tar.gz: it names employer-internal apps, and this
+# repo must stay generic. This is the equivalent generic set.
+apply_desktop_polish() {
+  log_info "Applying desktop polish (dock favourites, fonts, workspaces)..."
+
+  # Dock favourites, in order. Guarded: an app that is not installed is skipped
+  # rather than left as a dead icon in the dock.
+  local wanted=(
+    "com.mitchellh.ghostty.desktop"
+    "google-chrome.desktop"
+    "code.desktop"
+    "slack_slack.desktop"
+    "whatsapp-desktop-client_whatsapp-desktop-client.desktop"
+    "standard-notes_standard-notes.desktop"
+    "org.gnome.Nautilus.desktop"
+    "org.gnome.Settings.desktop"
+  )
+  local found=() d dir
+  for d in "${wanted[@]}"; do
+    for dir in "$HOME/.local/share/applications" /usr/share/applications \
+      /var/lib/snapd/desktop/applications /var/lib/flatpak/exports/share/applications; do
+      if [[ -f "$dir/$d" ]]; then
+        found+=("'$d'")
+        break
+      fi
+    done
+  done
+  if ((${#found[@]} > 0)); then
+    local joined
+    joined="$(
+      IFS=,
+      echo "${found[*]}"
+    )"
+    gset org.gnome.shell favorite-apps "[${joined//,/, }]"
+    log_success "  dock favourites set (${#found[@]} of ${#wanted[@]} apps present)"
   fi
-  # Register so it auto-enables on next login (Wayland can't enable it live this session).
-  register_extension "$TILING_UUID"
-  log_success "Tiling Shell will be active after logout/login"
+
+  # Overlay scrolling OFF. This is NOT cosmetic and is not about scrollbar looks:
+  # overlay scrolling is what enables GTK's kinetic/momentum scroll accumulation, and
+  # with it on, two-finger touchpad scrolling builds speed until it is unusable on this
+  # hardware. `false` gives fixed-step scrolling. Verified by A/B on the live machine —
+  # do not "tidy" this away again.
+  gset org.gnome.desktop.interface overlay-scrolling false
+
+  # Monospace font: match Ghostty/Neovim instead of the Ubuntu default. The font
+  # itself is installed by install_nerd_font() below; gsettings tolerates setting a
+  # font name before the file exists, and it resolves after fc-cache.
+  gset org.gnome.desktop.interface monospace-font-name "'JetBrainsMono Nerd Font 11'"
+
+  # Workspaces: dynamic, primary monitor only — matches the previous machine.
+  gset org.gnome.mutter dynamic-workspaces true
+  gset org.gnome.mutter workspaces-only-on-primary true
+
+  log_success "Desktop polish applied"
+}
+
+# ---- 3b. Keyboard layouts (US + Hebrew) ----
+# MUST run after install/launcher.sh — see the ORDERING note in this file's header.
+# bind_vicinae_shortcut() clears switch-input-source to free Super+Space; the layout
+# toggle moves to Super+Shift+Space (what the previous machine used).
+apply_input_sources() {
+  log_info "Setting keyboard layouts (US + Hebrew, toggle on Super+Shift+Space)..."
+  gset org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'il')]"
+  gset org.gnome.desktop.wm.keybindings switch-input-source "['<Super><Shift>space']"
+  gset org.gnome.desktop.wm.keybindings switch-input-source-backward "@as []"
+  log_success "Keyboard layouts set"
 }
 
 # ---- 4. JetBrains Mono Nerd Font ----
 install_nerd_font() {
   local fontdir="$HOME/.local/share/fonts/JetBrainsMonoNerd"
-  if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd Font"; then
+  if fc-list 2>/dev/null | pipe_matches -i "JetBrainsMono Nerd Font"; then
     log_success "JetBrains Mono Nerd Font already installed"
     return 0
   fi
@@ -169,30 +198,21 @@ verify_gnome() {
   echo "  key repeat-interval : $(gsettings get org.gnome.desktop.peripherals.keyboard repeat-interval 2>/dev/null)"
   echo "  tap-to-click        : $(gsettings get org.gnome.desktop.peripherals.touchpad tap-to-click 2>/dev/null)"
   echo "  color-scheme        : $(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)"
-  # On disk is not enough — a metadata.json the running shell rejects (wrong
-  # shell-version) still leaves the file there. Ask the shell for its state.
-  if ! ext_installed "$TILING_UUID"; then
-    log_warn "  Tiling Shell not installed"
-  else
-    local state
-    state="$(gnome-extensions info "$TILING_UUID" 2>/dev/null | awk -F': ' '/State:/{print $2; exit}' || true)"
-    case "$state" in
-      ENABLED* | ACTIVE*) log_success "  Tiling Shell $state" ;;
-      *) log_warn "  Tiling Shell installed but state is '${state:-unknown}' — logout/login to activate (OUT OF DATE = no build for this GNOME)" ;;
-    esac
-  fi
+  echo "  monospace font      : $(gsettings get org.gnome.desktop.interface monospace-font-name 2>/dev/null)"
+  echo "  input sources       : $(gsettings get org.gnome.desktop.input-sources sources 2>/dev/null)"
   fc-cache -f >/dev/null 2>&1 || true # ensure the cache reflects a just-installed font
-  if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd Font" \
+  if fc-list 2>/dev/null | pipe_matches -i "JetBrainsMono Nerd Font" \
     || ls "$HOME"/.local/share/fonts/JetBrainsMonoNerd/*.ttf >/dev/null 2>&1; then
     log_success "  JetBrains Mono Nerd Font present"
   else
     log_warn "  JetBrains Mono Nerd Font missing"
   fi
-  log_success "VERIFY done (logout/login if extensions are inactive)"
+  log_success "VERIFY done (extensions are verified by install/gnome-extensions.sh)"
 }
 
 apply_gsettings
 apply_tiling_keys
-install_tiling_shell
+apply_desktop_polish
+apply_input_sources
 install_nerd_font
 verify_gnome

@@ -67,7 +67,9 @@ run_desktop() { log_info  "== Desktop apps + Ghostty =="; source "$SCRIPT_DIR/in
 run_restore() { log_info  "== Restore configs =="; source "$SCRIPT_DIR/install/restore-configs.sh"; }
 run_claude()  { log_info  "== Claude Code =="; source "$SCRIPT_DIR/install/claude.sh"; }
 run_launcher(){ log_info  "== Vicinae launcher =="; source "$SCRIPT_DIR/install/launcher.sh"; }
-run_gnome()   { log_info  "== GNOME tweaks + Tiling Shell + fonts =="; source "$SCRIPT_DIR/install/gnome-setup.sh"; }
+run_gnome()   { log_info  "== GNOME tweaks + desktop polish + fonts =="; source "$SCRIPT_DIR/install/gnome-setup.sh"; }
+run_gnome_ext(){ log_info "== GNOME Shell extensions =="; source "$SCRIPT_DIR/install/gnome-extensions.sh"; }
+run_tuning()  { log_info  "== System tuning (sysctl, VA-API, trim) =="; source "$SCRIPT_DIR/install/system-tuning.sh"; }
 
 run_all() {
     system_update
@@ -78,7 +80,9 @@ run_all() {
     run_restore
     run_claude
     run_launcher
+    run_gnome_ext
     run_gnome
+    run_tuning
     setup_git
     final_notes
 }
@@ -91,12 +95,13 @@ final_notes() {
     echo ""
     echo "Manual / interactive steps remaining:"
     echo "  1. Make zsh your shell:   chsh -s \"\$(command -v zsh)\"   (then log out/in)"
-    echo "  2. Log out/in once so: Homebrew PATH, docker group, and the"
-    echo "     Vicinae + Tiling Shell GNOME extensions all activate (Wayland)."
+    echo "  2. Log out/in once so: Homebrew PATH, docker group, and ALL GNOME"
+    echo "     extensions activate — Wayland cannot load them into a running shell."
     echo "  3. Authenticate:  gh auth login   |   aws configure   |   gcloud init"
     echo "  4. SSH key:       ssh-keygen -t ed25519 -f ~/.ssh/github_ed25519"
     echo "  5. Open Ghostty; run 'nvim' once to let lazy.nvim install plugins."
-    echo "  6. Launcher: press Super+Space for Vicinae. Tiling: Super+arrows."
+    echo "  6. Launcher: Super+Space = Vicinae. Tiling: Super+arrows."
+    echo "     Keyboard layout (US/Hebrew): Super+Shift+Space."
     echo "  7. Claude Code: 'claude' (standard Anthropic login — no internal router)."
 }
 
@@ -110,11 +115,13 @@ menu() {
     echo "  6)  Restore configs (dotfiles)"
     echo "  7)  Claude Code (sanitized)"
     echo "  8)  Vicinae launcher"
-    echo "  9)  GNOME tweaks + Tiling Shell + fonts"
-    echo "  10) Git identity"
+    echo "  9)  GNOME tweaks + desktop polish + fonts"
+    echo "  10) GNOME Shell extensions (+ their settings)"
+    echo "  11) System tuning (sysctl, VA-API, trim)"
+    echo "  12) Git identity"
     echo "  0)  Exit"
     echo ""
-    read -rp "Choose [0-10]: " choice
+    read -rp "Choose [0-12]: " choice
     case "$choice" in
         1)  run_all ;;
         2)  system_update; run_brew ;;
@@ -125,7 +132,9 @@ menu() {
         7)  run_claude ;;
         8)  run_launcher ;;
         9)  run_gnome ;;
-        10) setup_git ;;
+        10) run_gnome_ext ;;
+        11) run_tuning ;;
+        12) setup_git ;;
         0)  exit 0 ;;
         *)  log_error "Invalid option"; exit 1 ;;
     esac

@@ -65,6 +65,7 @@ brew "node"
 # ---- Editor ----
 brew "neovim"
 brew "stow"               # dotfiles symlink manager
+brew "tmux"               # terminal multiplexer (config: configs/tmux/tmux.conf)
 
 # ---- Modern CLI (Tier 1 additions) ----
 brew "tlrc"               # tldr client (Rust) - manpages for humans

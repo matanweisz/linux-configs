@@ -26,18 +26,35 @@ grep the diff for company-specific strings.
 ### Ubuntu side (top-level)
 **Entry point:** `bootstrap.sh` — interactive numbered menu; option 1 = full run, which sources
 the `install/*.sh` modules in dependency order: system-update → brew → zsh → docker/gcloud →
-desktop-apps → restore-configs → claude → launcher → gnome-setup → git-identity.
+desktop-apps → restore-configs → claude → launcher → **gnome-extensions → gnome-setup** →
+system-tuning → git-identity.
+
+**Two ordering constraints in that sequence are load-bearing:**
+- `gnome-extensions` before `gnome-setup` — dash-to-dock's schema must be on disk before
+  `gnome-setup` writes dock keys through `gsettings`.
+- `gnome-setup` after `launcher` — `launcher.sh:bind_vicinae_shortcut` clears
+  `switch-input-source` to free Super+Space for Vicinae; `gnome-setup.sh:apply_input_sources`
+  then re-binds layout switching to Super+Shift+Space. Reversed, the launcher wipes it.
 
 **Package model (hybrid):** CLI tools come from **Homebrew** (`Brewfile`, identical names/versions
 to the Mac); GUI apps from apt/deb/snap (casks are macOS-only); Docker Engine + gcloud SDK are native (apt).
 
 **Install scripts** (`install/`):
-- `brew.sh` — Homebrew on Linux + `brew trust --tap fluxcd/tap` + `brew bundle --file=Brewfile` + krew plugins
+- `brew.sh` — Homebrew on Linux + `brew trust --tap` for **every** third-party tap (fluxcd, hashicorp)
+  + `brew bundle --file=Brewfile` + krew plugins
 - `zsh.sh` — zsh (apt) + Zinit + chsh hint
 - `devops-tools.sh` — **only** what brew can't do: Docker Engine + gcloud SDK (apt)
-- `desktop-apps.sh` — Ghostty (PPA), VS Code, Chrome, Slack, WhatsApp, drawio, Standard Notes, Beekeeper, OpenLens
+- `desktop-apps.sh` — Ghostty (PPA), VS Code, Chrome, Slack, WhatsApp, drawio, Standard Notes, Beekeeper
 - `launcher.sh` — Vicinae binary + GNOME companion extension + Super+Space keybind
-- `gnome-setup.sh` — gsettings tweaks (macos-defaults equivalents) + Tiling Shell + JetBrains Mono Nerd Font
+- `gnome-setup.sh` — gsettings tweaks (macos-defaults equivalents) + desktop polish (dock
+  favourites, monospace font, workspaces, US/Hebrew layouts) + JetBrains Mono Nerd Font.
+  Touches **core GNOME schemas only** — extensions live in the next module.
+- `gnome-extensions.sh` — the 11-UUID daily-driver extension set, installed from
+  extensions.gnome.org version-matched to the running shell, then
+  `dconf load /org/gnome/shell/extensions/ < gnome/extensions.dconf`. Adding or removing an
+  extension = editing the `EXTENSIONS` array plus the matching stanza in that keyfile.
+- `system-tuning.sh` — `/etc/sysctl.d/99-workstation.conf` (swappiness 10), Intel VA-API
+  packages for hardware video decode, `fstrim.timer` assertion
 - `claude.sh` — Claude Code native install + sanitized config into **both** profiles
   (`~/.claude` and `~/.claude-personal`, mirroring the mac side). Copies
   `claude/{CLAUDE.md,statusline.sh}` and `agents commands hooks output-styles rules` into each,
@@ -131,6 +148,31 @@ nvim --headless --clean \
 
 ## Gotchas
 
+- **`producer | grep -q PATTERN` is broken under `set -euo pipefail`.** `grep -q` exits at the
+  first match, the producer dies with SIGPIPE, and the pipeline reports 141 — so the test reads
+  FALSE exactly when the thing IS present. This silently made `install_nerd_font` re-download a
+  ~35 MB archive on every run and made `gset()` skippable. Use the `pipe_matches` helper in
+  `install/gnome-setup.sh` (`<producer> | pipe_matches -xF "$needle"`) or capture a `grep -c`
+  count with `|| true`. Never introduce a new `| grep -q` in these scripts.
+- **Extension settings need `dconf`, not `gsettings`.** A user-installed extension's schema
+  lives in `~/.local/share/gnome-shell/extensions/<uuid>/schemas/` and is invisible to
+  `gsettings` without `GSETTINGS_SCHEMA_DIR`. `gset()` guards on `gsettings list-schemas` and
+  would silently skip every extension key. That is why `gnome/extensions.dconf` exists.
+- **`org.gnome.desktop.interface overlay-scrolling false` is load-bearing, not cosmetic.**
+  Overlay scrolling is what turns on GTK's kinetic/momentum scroll accumulation; with it
+  enabled, two-finger touchpad scrolling builds speed until it is unusable on this hardware.
+  It reads like a scrollbar-appearance preference and has been "tidied away" once already.
+  Leave it off.
+- **dconf section names are paths, not UUIDs.** `rounded-window-corners@fxgn` writes to
+  `rounded-window-corners-reborn`. Check the real path before adding a stanza.
+- **Every third-party Homebrew tap needs `brew trust --tap`.** One untrusted tap aborts the
+  entire `brew bundle` run ("Refusing to load formula ... from untrusted tap"), which is how
+  terraform silently went missing on a fresh machine. `install/brew.sh` trusts `fluxcd/tap`
+  and `hashicorp/tap`; add a line for any new tap in either Brewfile.
+- **`ubuntu-dock@ubuntu.com` self-disables when `dash-to-dock@micxgx.gmail.com` loads** (see its
+  `extension.js` `_conditionallyEnableDock`), and both share the
+  `org.gnome.shell.extensions.dash-to-dock` schema. Installing dash-to-dock needs no manual
+  disable, and dock settings apply to whichever one is active.
 - **nvim-treesitter (main branch)** requires `tree-sitter-cli` (not the `tree-sitter` library formula) to compile parsers. Without it, nvim spams ENOENT errors on every startup. It is listed in the Brewfile; ensure `brew bundle` has run before opening nvim.
 - **`TrackpadThreeFingerDrag`** is intentionally absent from `macos-defaults.sh`. Setting it to `true` reassigns three-finger swipes from Mission Control/spaces navigation to window drag, breaking standard macOS gesture muscle memory.
 
@@ -138,7 +180,9 @@ nvim --headless --clean \
 
 ### Ubuntu
 1. Pick the right place: **CLI tool → add to `Brewfile`**; native daemon → `install/devops-tools.sh`;
-   GUI app → `install/desktop-apps.sh`; launcher/GNOME → `install/launcher.sh` / `install/gnome-setup.sh`.
+   GUI app → `install/desktop-apps.sh`; launcher → `install/launcher.sh`; GNOME *setting* →
+   `install/gnome-setup.sh`; GNOME *extension* → the `EXTENSIONS` array in
+   `install/gnome-extensions.sh` **and** a stanza in `gnome/extensions.dconf`.
 2. Follow the existing pattern: command-exists/list check → install → `log_success`, and extend the module's `verify` section.
 3. If the tool ships a config, drop it in the matching topic dir (`configs/`, `bash/`, etc.) and extend `install/restore-configs.sh`
 
