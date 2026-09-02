@@ -46,7 +46,8 @@ Then, by hand:
 3. `ssh-keygen -t ed25519 -f ~/.ssh/github_ed25519`, add the pubkey to GitHub.
 4. Run `nvim` once so lazy.nvim installs plugins.
 5. `pre-commit install` in this repo (activates the gitleaks hook).
-6. Claude Code: re-add MCP servers and plugins by hand — `mac/claude/RESTORE-NOTES.md`, `mac/claude/plugins.md`.
+6. Claude Code: plugins + marketplaces restore automatically (bootstrap option 7). Only
+   MCP servers need re-adding by hand — `mac/claude/RESTORE-NOTES.md`, `mac/claude/plugins.md`.
 7. Super+Space for Vicinae; Super+arrows to tile; Super+Shift+Space for US/Hebrew.
 
 ### macOS

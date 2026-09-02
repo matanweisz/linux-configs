@@ -84,19 +84,37 @@ file), and keep their tokens in 1Password / Vault — never in this repo.
 No auth tokens or API base URLs are stored in any tracked settings file. All three
 profiles authenticate interactively on first run.
 
-## Desired-state drift (intentional)
+## No `permissions` block — deliberate
 
-`mac/claude/settings.json` keeps a `permissions` allow/deny/ask block that live
-`~/.claude/settings.json` does not have. That is deliberate — it is the desired
-state for a new machine, not a mirror of the current one. Everything else
-(`model`, `hooks`, `statusLine`, `enabledPlugins`, `extraKnownMarketplaces`,
-`outputStyle`, `alwaysThinkingEnabled`, `skipDangerousModePermissionPrompt`) is
-synced to live.
+None of the settings files carries a `permissions` allow/deny/ask block any more.
+It was removed on request: `deny` entries still apply under
+`--dangerously-skip-permissions`, so the block kept interrupting the very workflow
+it was supposed to stand aside for. The `hooks` are kept and are the remaining
+guard rail.
 
-## Plugins
+Do not reintroduce a `permissions` key when refreshing these files from a live
+machine — its absence is the desired state, not drift.
 
-Plugin code is not tracked. See `mac/claude/plugins.md` for the `enabledPlugins`
-lists and the marketplaces to re-add first.
+## Plugins — restored automatically
+
+Plugin *code* is not tracked (it lives under `~/.claude*/plugins/`), so copying the
+settings files alone leaves every plugin **declared but not installed**. That is how
+`ponytail`, `humanizer` and the skills they provide went missing on a fresh machine
+even though the settings looked correct.
+
+`install/claude.sh:restore_plugins()` closes that gap: for each profile it reads
+`extraKnownMarketplaces` and `enabledPlugins` from that profile's own settings file
+and drives `claude plugin marketplace add` / `claude plugin install`. It is
+idempotent and needs network plus a logged-in `claude`.
+
+Adding a plugin therefore means enabling it in the settings file — nothing else.
+`mac/claude/plugins.md` is a human-readable mirror of those lists.
+
+Verify a restore:
+
+```bash
+CLAUDE_CONFIG_DIR=~/.claude-personal claude plugin list | grep -c '@'   # expect 25
+```
 
 ## Profile parity check
 

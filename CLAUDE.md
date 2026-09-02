@@ -61,7 +61,9 @@ to the Mac); GUI apps from apt/deb/snap (casks are macOS-only); Docker Engine + 
   plus **`mac/claude/skills/`** — skills are shared, not duplicated under `claude/`. Settings go
   one per target: `settings.json` → `~/.claude/settings.json`, `settings.personal.json` →
   `~/.claude/settings.personal.json`, `settings.claude-personal.json` →
-  `~/.claude-personal/settings.json`
+  `~/.claude-personal/settings.json`. Then `restore_plugins()` installs the marketplaces
+  and plugins declared in each profile's own settings — plugin code is not tracked, so
+  copying settings alone leaves every plugin declared but uninstalled.
 - `restore-configs.sh` — copies dotfiles (zsh/ghostty/nvim/starship/git/btop) with timestamped backups
 
 Each `install/*.sh` is **independently runnable** (standalone log-helper fallback) and ends with a
@@ -171,6 +173,14 @@ nvim --headless --clean \
   from the declared pad size, so declaring the pad smaller than it is slows scrolling
   proportionally. Symptom that points here: scroll is too fast on the touchpad but correct
   on an external mouse (a wheel sends discrete notches, a touchpad sends distance).
+- **Claude settings carry no `permissions` block, deliberately.** It was removed on request:
+  `deny` rules still apply under `--dangerously-skip-permissions`, so the block blocked the
+  very workflow it was meant to sit out of. The `hooks` are kept and are the remaining guard.
+  Do not reintroduce a `permissions` key when refreshing these files from a live machine.
+- **Restoring Claude settings does not restore plugins.** Plugin code lives under
+  `~/.claude*/plugins/` and is not tracked. `install/claude.sh:restore_plugins()` reads
+  `extraKnownMarketplaces` + `enabledPlugins` from each profile's settings and drives the
+  `claude plugin` CLI. Adding a plugin = enabling it in the settings file, nothing else.
 - **dconf section names are paths, not UUIDs.** `rounded-window-corners@fxgn` writes to
   `rounded-window-corners-reborn`. Check the real path before adding a stanza.
 - **Every third-party Homebrew tap needs `brew trust --tap`.** One untrusted tap aborts the

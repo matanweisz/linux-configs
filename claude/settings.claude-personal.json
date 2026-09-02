@@ -6,7 +6,7 @@
     "MCP_TIMEOUT": "30000",
     "MCP_TOOL_TIMEOUT": "60000"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "fable[1m]",
   "hooks": {
     "PreToolUse": [
       {
