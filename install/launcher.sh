@@ -81,7 +81,36 @@ install_vicinae_binary() {
     log_warn "vicinae install failed"
     return 0
   fi
-  log_warn "One-time step for snippet expansion + paste (needs root, do it manually):"
+}
+
+# ---- 1b. Grant the input server the capability it needs to paste ----
+# Snippet expansion and "paste into the active app" need the input server to open
+# the uinput/evdev nodes. Without the capability it silently does nothing. This was
+# previously two log_warn lines asking the user to run the command by hand, which in
+# practice meant it never happened on any machine.
+grant_input_server_cap() {
+  [[ -f "$VICINAE_INPUT_SERVER" ]] || {
+    log_warn "input server not found at $VICINAE_INPUT_SERVER — skipping capability grant"
+    return 0
+  }
+  if [[ "$(getcap "$VICINAE_INPUT_SERVER" 2>/dev/null | grep -c cap_dac_override || true)" -gt 0 ]]; then
+    log_success "vicinae-input-server already has cap_dac_override"
+    return 0
+  fi
+  command -v setcap &>/dev/null || {
+    log_warn "setcap missing (apt install libcap2-bin) — snippet paste will not work"
+    return 0
+  }
+  # Only attempt the privileged call when a cached credential exists or we are on an
+  # interactive terminal that can prompt; otherwise fall back to telling the user.
+  if sudo -n true 2>/dev/null || [[ -t 0 ]]; then
+    if sudo setcap cap_dac_override=ep "$VICINAE_INPUT_SERVER"; then
+      log_success "Granted cap_dac_override to vicinae-input-server (snippet paste enabled)"
+      systemctl --user restart vicinae.service 2>/dev/null || true
+      return 0
+    fi
+  fi
+  log_warn "Could not grant the capability automatically. Run once by hand:"
   log_warn "  sudo setcap cap_dac_override=ep $VICINAE_INPUT_SERVER"
 }
 
@@ -123,6 +152,11 @@ install_vicinae_extension() {
   if ! command -v gnome-extensions &>/dev/null; then
     log_warn "gnome-extensions not found — skipping Vicinae GNOME extension"
     return 0
+  fi
+  if [[ "$(getcap "$VICINAE_INPUT_SERVER" 2>/dev/null | grep -c cap_dac_override || true)" -gt 0 ]]; then
+    log_success "  input server has cap_dac_override (snippet paste works)"
+  else
+    log_warn "  input server lacks cap_dac_override — snippet paste will not work"
   fi
   if ext_installed "$VICINAE_UUID"; then
     log_success "Vicinae GNOME extension already installed"
@@ -201,6 +235,7 @@ verify_launcher() {
 }
 
 install_vicinae_binary
+grant_input_server_cap
 setup_vicinae_service
 install_vicinae_extension
 bind_vicinae_shortcut

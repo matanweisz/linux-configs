@@ -3,7 +3,8 @@
 # =============================================================================
 
 # ---- Claude Code ----
-alias claude-personal="CLAUDE_CONFIG_DIR=~/.claude-personal claude"
+# Single profile on Ubuntu (~/.claude) — no claude-personal alias here. The Mac
+# stack keeps a second profile; this one deliberately does not.
 
 # ---- Modern CLI replacements ----
 alias ls='eza --icons --group-directories-first'

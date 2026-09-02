@@ -1,9 +1,17 @@
 # Claude Code plugin manifest
 
-Restore reference only — not executable. Plugin *code* is not tracked in this repo
-(it lives under `~/.claude*/plugins/`, managed by Claude Code). On a new machine,
-add the marketplaces below, then enable the plugins. `enabledPlugins` keys in the
-settings files use the form `<plugin>@<marketplace>`.
+Plugin *code* is not tracked in this repo (it lives under `~/.claude*/plugins/`,
+managed by Claude Code) — only the manifest is.
+
+**This is now restored automatically.** `install/claude.sh:restore_plugins()` reads
+`extraKnownMarketplaces` and `enabledPlugins` straight out of each profile's settings
+file and drives `claude plugin marketplace add` / `claude plugin install`. The settings
+files are the single source of truth; this page is a human-readable mirror of them.
+Restoring settings alone is NOT enough — it leaves every plugin declared but not
+installed, which is exactly how ponytail/humanizer and the skills they provide went
+missing on a fresh machine.
+
+`enabledPlugins` keys use the form `<plugin>@<marketplace>`.
 
 ## Marketplaces
 
@@ -16,9 +24,9 @@ settings files use the form `<plugin>@<marketplace>`.
 | `humanizer` | github `blader/humanizer` |
 
 All five have their `source` block captured in
-`mac/claude/settings.claude-personal.json` → `extraKnownMarketplaces`, so a restore
-of that file re-registers them. To add one by hand:
-`/plugin marketplace add <owner>/<repo>`.
+`mac/claude/settings.claude-personal.json` → `extraKnownMarketplaces`, which is what
+`restore_plugins()` iterates. Only `source: github` entries are automated; anything
+else is reported as needing a manual `/plugin marketplace add <owner>/<repo>`.
 
 ## Plugin list (25)
 

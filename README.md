@@ -31,7 +31,8 @@ cd ~/git/linux-configs
 ```
 
 Menu: 1) Full · 2) Homebrew+CLI · 3) Zsh+Zinit · 4) Docker+gcloud · 5) Desktop apps+Ghostty ·
-6) Restore configs · 7) Claude Code · 8) Vicinae · 9) GNOME tweaks+Tiling+fonts · 10) Git identity · 0) Exit.
+6) Restore configs · 7) Claude Code · 8) Vicinae · 9) GNOME tweaks+polish+fonts ·
+10) GNOME Shell extensions · 11) System tuning · 12) Git identity · 0) Exit.
 
 Privileged steps (apt, PPAs, initial Homebrew, Docker) prompt for sudo. Everything
 user-level (Vicinae, GNOME settings, fonts, Zinit, Claude config, dotfiles) does not.
@@ -39,13 +40,15 @@ user-level (Vicinae, GNOME settings, fonts, Zinit, Claude config, dotfiles) does
 Then, by hand:
 
 1. `chsh -s "$(command -v zsh)"` and **log out/in** (also activates the Homebrew PATH,
-   the docker group, and the Vicinae + Tiling Shell GNOME extensions on Wayland).
+   the docker group, and *all* GNOME extensions — Wayland cannot load an extension into
+   a running shell, so nothing under option 10 appears until you log back in).
 2. `gh auth login` · `aws configure` · `gcloud init`
 3. `ssh-keygen -t ed25519 -f ~/.ssh/github_ed25519`, add the pubkey to GitHub.
 4. Run `nvim` once so lazy.nvim installs plugins.
 5. `pre-commit install` in this repo (activates the gitleaks hook).
-6. Claude Code: re-add MCP servers and plugins by hand — `mac/claude/RESTORE-NOTES.md`, `mac/claude/plugins.md`.
-7. Super+Space for Vicinae; Super+arrows to tile.
+6. Claude Code: plugins + marketplaces restore automatically (bootstrap option 7). Only
+   MCP servers need re-adding by hand — `mac/claude/RESTORE-NOTES.md`, `mac/claude/plugins.md`.
+7. Super+Space for Vicinae; Super+arrows to tile; Super+Shift+Space for US/Hebrew.
 
 ### macOS
 
@@ -99,13 +102,17 @@ linux-configs/
 │   ├── devops-tools.sh       # Docker Engine + gcloud (native apt)
 │   ├── desktop-apps.sh       # Ghostty, VS Code, Chrome, Slack, WhatsApp, etc.
 │   ├── launcher.sh           # Vicinae + GNOME companion + Super+Space
-│   ├── gnome-setup.sh        # gsettings + Tiling Shell + JetBrains Mono Nerd Font
+│   ├── gnome-setup.sh        # gsettings + desktop polish + JetBrains Mono Nerd Font
+│   ├── gnome-extensions.sh   # Shell extensions from extensions.gnome.org + their dconf
+│   ├── system-tuning.sh      # sysctl (swappiness), VA-API video decode, fstrim
 │   ├── claude.sh             # Claude Code (native) + sanitized config + shared skills
 │   └── restore-configs.sh    # copy dotfiles into place (timestamped backups)
 ├── zsh/{.zshrc,.zsh_aliases} # shell config
 ├── bash/.bash_aliases        # bash fallback aliases
 ├── ghostty/config            # terminal config
 ├── nvim/init.lua             # editor config (in sync with mac/nvim/init.lua)
+├── gnome/extensions.dconf    # GNOME Shell extension settings (source of truth)
+├── configs/libinput/         # touchpad scroll-damping quirk (-> /etc/libinput/)
 ├── configs/                  # shared: starship.toml, .gitconfig, .gitignore_global, btop/
 ├── claude/                   # Ubuntu Claude Code config (no skills/ — see mac/claude/skills)
 ├── github/                   # SSH setup guide
@@ -154,13 +161,18 @@ direction, then commit on a branch.
 | `~/.claude/{agents,commands,hooks,output-styles,rules}/` | same, per OS |
 | `~/.claude/skills/` | `mac/claude/skills/` — **single source for both OSes** |
 | `~/.claude/settings.json` | `mac/claude/settings.json` · `claude/settings.json` |
-| `~/.claude/settings.personal.json` | `mac/claude/settings.personal.json` · `claude/settings.personal.json` |
-| `~/.claude-personal/settings.json` | `mac/claude/settings.claude-personal.json` · `claude/settings.claude-personal.json` |
+| `~/.claude/settings.personal.json` | `mac/claude/settings.personal.json` *(macOS only)* |
+| `~/.claude-personal/settings.json` | `mac/claude/settings.claude-personal.json` *(macOS only)* |
 
-Both OSes populate **both** profiles (`~/.claude` and `~/.claude-personal`) — Ubuntu via
-`install/claude.sh`, macOS via `restore_configs()`. `install/claude.sh` copies
-`mac/claude/skills/` into each profile's `skills/` — skills are deliberately not duplicated
-under `claude/`.
+**Ubuntu is single-profile.** There is one config, `~/.claude`, used by the plain `claude`
+command, and one file behind it: `claude/settings.json`. No `claude-personal` profile and no
+alias. macOS still runs two profiles (`~/.claude` and `~/.claude-personal`) via
+`restore_configs()` — that asymmetry is deliberate, not drift.
+
+`install/claude.sh` copies `mac/claude/skills/` into `~/.claude/skills/` — skills are
+deliberately not duplicated under `claude/`. It also installs the marketplaces and plugins
+declared in `claude/settings.json`; plugin code is not tracked, so restoring settings alone
+would leave every plugin declared but uninstalled.
 
 **Before committing any settings file, empty every `mcpServers` block** — that's where
 tokens live:
@@ -223,12 +235,25 @@ defaults read -g InitialKeyRepeat
 
 ### GNOME (Ubuntu)
 
+Extensions and their settings are **declarative**, not restored from a tarball. After
+tuning an extension in its preferences dialog, export it back:
+
 ```bash
-./gnome-backup.sh   # timestamped tarball in backup/ (extensions + dconf dump)
+dconf dump /org/gnome/shell/extensions/ > gnome/extensions.dconf
 ```
 
-The curated `install/gnome-setup.sh` is preferred over restoring an old tarball; the
-backup exists as a fallback record.
+Then trim the stanzas for extensions that are not in the `EXTENSIONS` list in
+`install/gnome-extensions.sh` — dconf keeps settings for long-uninstalled extensions
+forever, so a raw dump carries years of dead config. To add or drop an extension, edit
+that `EXTENSIONS` list; it is keyed by UUID and version-matched to the running shell at
+install time.
+
+```bash
+./gnome-backup.sh   # timestamped tarball in backup/ — fallback record only
+```
+
+The curated `install/gnome-setup.sh` + `gnome/extensions.dconf` pair is the source of
+truth; the tarball exists as a fallback record and is not what bootstrap reads.
 
 ### Commit
 

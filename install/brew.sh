@@ -50,8 +50,12 @@ fi
 
 # ---- Install CLI tools from Brewfile ----
 # Recent brew refuses to load third-party tap formulae until the tap is trusted.
+# EVERY third-party tap in the Brewfile needs this — an untrusted tap aborts the
+# whole `brew bundle` run with "Refusing to load formula ... from untrusted tap",
+# which is how terraform silently went missing on a fresh machine.
 # `|| true` keeps older brew (no `trust` subcommand) working.
 brew trust --tap fluxcd/tap 2>/dev/null || true
+brew trust --tap hashicorp/tap 2>/dev/null || true
 log_info "Installing CLI tools from Brewfile (this can take a while)..."
 if brew bundle --file="${REPO_DIR}/Brewfile"; then
     log_success "Brewfile packages installed"

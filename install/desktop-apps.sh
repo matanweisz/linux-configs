@@ -3,7 +3,9 @@
 # Desktop applications (GUI). Homebrew casks are macOS-only, so GUI apps come
 # from apt/deb/snap here. Selection mirrors the user's daily set:
 #   Ghostty, VS Code, Chrome, Slack, WhatsApp, drawio, Standard Notes,
-#   Beekeeper Studio, OpenLens. (Spotify/Bitwarden intentionally skipped.)
+#   Beekeeper Studio. (Spotify/Bitwarden intentionally skipped.)
+#   OpenLens was dropped: upstream is unmaintained (last release 2023) and k9s
+#   (Brewfile) covers the same workflow from the terminal.
 #   Also intentionally skipped: Android Studio + Android tooling (no active
 #   need on this stack), the codex CLI cask (not part of this workflow), and
 #   the Stats menubar app (no GNOME analog configured — btop covers CLI
@@ -86,25 +88,6 @@ install_snap whatsapp-desktop-client
 install_snap drawio
 install_snap standard-notes
 install_snap beekeeper-studio
-
-# ============================================
-# OpenLens (Kubernetes IDE) — GitHub release .deb
-# Unmaintained (last release 2023); k9s (Brewfile) covers the same workflow.
-# ============================================
-log_info "Installing OpenLens..."
-if ! command -v open-lens &>/dev/null && ! dpkg -l 2>/dev/null | grep -qi openlens; then
-    url="$(curl -fsSL https://api.github.com/repos/MuhammedKalkan/OpenLens/releases/latest 2>/dev/null \
-          | jq -r '.assets[]|select(.name|test("amd64\\.deb$")).browser_download_url' 2>/dev/null | head -1 || true)"
-    if [[ -n "$url" && "$url" != "null" ]]; then
-        wget -q -O /tmp/openlens.deb "$url"
-        sudo apt-get install -y /tmp/openlens.deb && log_success "OpenLens installed" || log_warn "OpenLens install failed"
-        rm -f /tmp/openlens.deb
-    else
-        log_warn "OpenLens install skipped (GitHub API unavailable)"
-    fi
-else
-    log_success "OpenLens already installed"
-fi
 
 # ============================================
 # Verify
