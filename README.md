@@ -161,13 +161,18 @@ direction, then commit on a branch.
 | `~/.claude/{agents,commands,hooks,output-styles,rules}/` | same, per OS |
 | `~/.claude/skills/` | `mac/claude/skills/` — **single source for both OSes** |
 | `~/.claude/settings.json` | `mac/claude/settings.json` · `claude/settings.json` |
-| `~/.claude/settings.personal.json` | `mac/claude/settings.personal.json` · `claude/settings.personal.json` |
-| `~/.claude-personal/settings.json` | `mac/claude/settings.claude-personal.json` · `claude/settings.claude-personal.json` |
+| `~/.claude/settings.personal.json` | `mac/claude/settings.personal.json` *(macOS only)* |
+| `~/.claude-personal/settings.json` | `mac/claude/settings.claude-personal.json` *(macOS only)* |
 
-Both OSes populate **both** profiles (`~/.claude` and `~/.claude-personal`) — Ubuntu via
-`install/claude.sh`, macOS via `restore_configs()`. `install/claude.sh` copies
-`mac/claude/skills/` into each profile's `skills/` — skills are deliberately not duplicated
-under `claude/`.
+**Ubuntu is single-profile.** There is one config, `~/.claude`, used by the plain `claude`
+command, and one file behind it: `claude/settings.json`. No `claude-personal` profile and no
+alias. macOS still runs two profiles (`~/.claude` and `~/.claude-personal`) via
+`restore_configs()` — that asymmetry is deliberate, not drift.
+
+`install/claude.sh` copies `mac/claude/skills/` into `~/.claude/skills/` — skills are
+deliberately not duplicated under `claude/`. It also installs the marketplaces and plugins
+declared in `claude/settings.json`; plugin code is not tracked, so restoring settings alone
+would leave every plugin declared but uninstalled.
 
 **Before committing any settings file, empty every `mcpServers` block** — that's where
 tokens live:

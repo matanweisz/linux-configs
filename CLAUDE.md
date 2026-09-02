@@ -55,15 +55,13 @@ to the Mac); GUI apps from apt/deb/snap (casks are macOS-only); Docker Engine + 
   extension = editing the `EXTENSIONS` array plus the matching stanza in that keyfile.
 - `system-tuning.sh` — `/etc/sysctl.d/99-workstation.conf` (swappiness 10), Intel VA-API
   packages for hardware video decode, `fstrim.timer` assertion
-- `claude.sh` — Claude Code native install + sanitized config into **both** profiles
-  (`~/.claude` and `~/.claude-personal`, mirroring the mac side). Copies
-  `claude/{CLAUDE.md,statusline.sh}` and `agents commands hooks output-styles rules` into each,
-  plus **`mac/claude/skills/`** — skills are shared, not duplicated under `claude/`. Settings go
-  one per target: `settings.json` → `~/.claude/settings.json`, `settings.personal.json` →
-  `~/.claude/settings.personal.json`, `settings.claude-personal.json` →
-  `~/.claude-personal/settings.json`. Then `restore_plugins()` installs the marketplaces
-  and plugins declared in each profile's own settings — plugin code is not tracked, so
-  copying settings alone leaves every plugin declared but uninstalled.
+- `claude.sh` — Claude Code native install + sanitized config into the **single** Ubuntu
+  profile `~/.claude` (used by the plain `claude` command). Copies
+  `claude/{CLAUDE.md,statusline.sh,settings.json}` and `agents commands hooks output-styles
+  rules`, plus **`mac/claude/skills/`** — skills are shared, not duplicated under `claude/`.
+  Then `restore_plugins()` installs the marketplaces and plugins declared in
+  `claude/settings.json` — plugin code is not tracked, so copying settings alone leaves
+  every plugin declared but uninstalled.
 - `restore-configs.sh` — copies dotfiles (zsh/ghostty/nvim/starship/git/btop) with timestamped backups
 
 Each `install/*.sh` is **independently runnable** (standalone log-helper fallback) and ends with a
@@ -79,7 +77,7 @@ The new flow prefers the curated `install/gnome-setup.sh` over restoring an old 
 
 **Config layout:** topic dirs (`mac/zsh/`, `mac/nvim/`, `mac/ghostty/`, `mac/aerospace/`, `mac/alttab/`, `mac/raycast/`, `mac/claude/`, `mac/configs/{borders,tmux,gh,atuin}/`). `restore_configs()` copies (not symlinks) to `~/.config/` and `~`. `mac/alttab/` and `mac/raycast/` are `defaults import` plists, not file copies — the import is skipped while the app is running.
 
-**Claude Code config:** `restore_configs()` loops over **two** profile dirs — `~/.claude` (default) and `~/.claude-personal` (selected by the `claude-personal` alias via `CLAUDE_CONFIG_DIR`) — copying `CLAUDE.md`, `statusline.sh`, and `agents commands hooks output-styles rules skills` into each. The three settings files are copied afterwards, one per target: `settings.json` → `~/.claude/settings.json`, `settings.personal.json` → `~/.claude/settings.personal.json`, `settings.claude-personal.json` → `~/.claude-personal/settings.json`. `plugins.md` and `RESTORE-NOTES.md` are docs and must NOT be copied into either profile. Secrets are scrubbed in-repo — no auth tokens are tracked and every `mcpServers` block is emptied. See `mac/claude/RESTORE-NOTES.md`.
+**Claude Code config (macOS only — Ubuntu is single-profile):** `restore_configs()` loops over **two** profile dirs — `~/.claude` (default) and `~/.claude-personal` (selected by the `claude-personal` alias via `CLAUDE_CONFIG_DIR`) — copying `CLAUDE.md`, `statusline.sh`, and `agents commands hooks output-styles rules skills` into each. The three settings files are copied afterwards, one per target: `settings.json` → `~/.claude/settings.json`, `settings.personal.json` → `~/.claude/settings.personal.json`, `settings.claude-personal.json` → `~/.claude-personal/settings.json`. `plugins.md` and `RESTORE-NOTES.md` are docs and must NOT be copied into either profile. Secrets are scrubbed in-repo — no auth tokens are tracked and every `mcpServers` block is emptied. See `mac/claude/RESTORE-NOTES.md`.
 
 **Cross-platform configs:** `mac/bootstrap.sh` reads `${SCRIPT_DIR}/../configs/btop/` from the top-level `configs/` dir — that's the single source of truth for the btop theme on both OSes.
 
@@ -181,6 +179,10 @@ nvim --headless --clean \
   `~/.claude*/plugins/` and is not tracked. `install/claude.sh:restore_plugins()` reads
   `extraKnownMarketplaces` + `enabledPlugins` from each profile's settings and drives the
   `claude plugin` CLI. Adding a plugin = enabling it in the settings file, nothing else.
+- **Ubuntu is single-profile; macOS is not.** Ubuntu has exactly one Claude config,
+  `~/.claude`, backed by one file, `claude/settings.json`. There is no `claude-personal`
+  profile and no alias — do not "restore parity" by re-adding one. The mac side keeps two
+  profiles and three settings files on purpose; that asymmetry is intentional.
 - **dconf section names are paths, not UUIDs.** `rounded-window-corners@fxgn` writes to
   `rounded-window-corners-reborn`. Check the real path before adding a stanza.
 - **Every third-party Homebrew tap needs `brew trust --tap`.** One untrusted tap aborts the

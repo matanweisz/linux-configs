@@ -113,9 +113,9 @@ full run. Same dotfiles, Linux-native tooling. See the repo `README.md`.
 
 Then the manual pieces bootstrap can't do:
 
-- **Claude Code** — `mac/claude/RESTORE-NOTES.md`. Both profiles (`~/.claude` and
-  `~/.claude-personal`) and `skills/` restore automatically; re-add any `mcpServers`
-  blocks by hand (scrubbed on purpose). Plugins/marketplaces: `mac/claude/plugins.md`.
+- **Claude Code** — `mac/claude/RESTORE-NOTES.md`. Config, `skills/`, marketplaces and
+  plugins all restore automatically (macOS: both profiles; Ubuntu: the single `~/.claude`).
+  Only `mcpServers` blocks need re-adding by hand — they are scrubbed on purpose.
 - **Raycast** — `mac/raycast/README.md` (the plist restores; snippets/quicklinks need a `.rayconfig` export).
 - **AltTab** — `mac/alttab/README.md`.
 - **SSH** — bootstrap writes a `github.com` block. Add a block per additional git
