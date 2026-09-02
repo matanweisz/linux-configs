@@ -17,7 +17,7 @@ after the wipe.
 | AWS static keys | `~/.aws/credentials` may hold long-lived access keys (not just SSO cache). Check it and rotate/delete any static credentials found. |
 | gcloud | `gcloud auth revoke --all` and `gcloud auth application-default revoke`. |
 | Other CLI vendors | Check `~/.config/*/credentials.json` and `~/.netrc` for live API credentials — rotate or delete each. Specifically: `~/.config/higgsfield/credentials.json`, `~/.codex/auth.json`, `~/.gemini/oauth_creds.json`. |
-| Secondary Claude Code settings file | `~/.claude-personal/settings.requesty.json` — a separate settings file carrying its own router token. Rotate it, don't assume the main settings rotation covers it. |
+| Secondary Claude Code settings file *(macOS only)* | `~/.claude-personal/settings.requesty.json` — a separate settings file carrying its own router token. Rotate it, don't assume the main settings rotation covers it. Ubuntu is single-profile and has no such file. |
 | Docker registry logins | Every registry listed under `auths` in `~/.docker/config.json` — not just `docker.io`/`ghcr.io`. Run `docker logout <registry>` for each (any private/employer container registries included). |
 | Atuin | Sync is off / local-only, but if a sync key was ever set, rotate it. |
 | Project env files | Sweep for stray `.env*` files before wipe: `fd -H '^\.env' ~ -d 4 -E node_modules` (or `find ~ -maxdepth 4 -iname '.env*'`). Rotate any live keys found in them. |
