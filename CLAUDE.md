@@ -163,6 +163,14 @@ nvim --headless --clean \
   enabled, two-finger touchpad scrolling builds speed until it is unusable on this hardware.
   It reads like a scrollbar-appearance preference and has been "tidied away" once already.
   Leave it off.
+- **GNOME has no touchpad scroll-speed setting — do not go looking for one.** Every `scroll`
+  key in every installed schema is a direction or enable toggle; `touchpad speed` is POINTER
+  acceleration and does not touch scrolling. libinput ships no scroll-factor quirk either
+  (`AttrTrackpointMultiplier` is trackpoint-only). The only system-wide lever is
+  `AttrSizeHint` in `configs/libinput/local-overrides.quirks`: libinput derives resolution
+  from the declared pad size, so declaring the pad smaller than it is slows scrolling
+  proportionally. Symptom that points here: scroll is too fast on the touchpad but correct
+  on an external mouse (a wheel sends discrete notches, a touchpad sends distance).
 - **dconf section names are paths, not UUIDs.** `rounded-window-corners@fxgn` writes to
   `rounded-window-corners-reborn`. Check the real path before adding a stanza.
 - **Every third-party Homebrew tap needs `brew trust --tap`.** One untrusted tap aborts the

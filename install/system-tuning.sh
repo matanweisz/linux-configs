@@ -7,6 +7,8 @@
 #   - Intel VA-API driver      (hardware video decode in Chrome/Firefox — saves
 #                               battery and CPU on every video call and stream)
 #   - fstrim.timer assertion   (already on by default; assert, do not re-enable)
+#   - libinput touchpad quirk  (damps the ASUS M16 pad's far-too-fast two-finger
+#                               scroll; GNOME has no scroll-speed setting at all)
 #
 # Nothing here is GNOME- or Ubuntu-version specific. Every step is idempotent and
 # each writes a drop-in file rather than editing a distro-managed one, so
@@ -24,7 +26,9 @@ if ! declare -F log_info >/dev/null 2>&1; then
     log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 fi
 
+REPO_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 SYSCTL_DROPIN="/etc/sysctl.d/99-workstation.conf"
+QUIRKS_DEST="/etc/libinput/local-overrides.quirks"
 
 # ---- 1. Kernel VM tuning ----
 apply_sysctl() {
@@ -79,6 +83,25 @@ install_vaapi() {
     fi
 }
 
+# ---- 2b. libinput touchpad scroll damping ----
+# Matches on MatchVendor/MatchProduct, so installing this on any other machine is
+# a no-op rather than a regression. See the header of
+# configs/libinput/local-overrides.quirks for the resolution maths, the tuning
+# dial, and the side effects (pointer speed scales too; compensate with the
+# touchpad `speed` gsettings key, which is pointer-only).
+install_touchpad_quirk() {
+    local src="${REPO_DIR}/configs/libinput/local-overrides.quirks"
+    [[ -f "$src" ]] || { log_warn "missing $src — skipping touchpad quirk"; return 0; }
+    if [[ -f "$QUIRKS_DEST" ]] && cmp -s "$src" "$QUIRKS_DEST"; then
+        log_success "libinput touchpad quirk already installed"
+        return 0
+    fi
+    log_info "Installing libinput touchpad quirk -> $QUIRKS_DEST"
+    sudo install -D -o root -g root -m 644 "$src" "$QUIRKS_DEST" \
+        && log_success "touchpad quirk installed (active after logout/login)" \
+        || log_warn "could not install touchpad quirk"
+}
+
 # ---- 3. Trim ----
 assert_fstrim() {
     if systemctl is-enabled fstrim.timer &>/dev/null; then
@@ -101,6 +124,12 @@ verify_tuning() {
     systemctl is-enabled fstrim.timer &>/dev/null \
         && log_success "  fstrim.timer enabled" || log_warn "  fstrim.timer not enabled"
 
+    if [[ -f "$QUIRKS_DEST" ]]; then
+        log_success "  touchpad quirk present ($QUIRKS_DEST)"
+    else
+        log_warn "  touchpad quirk not installed — touchpad scroll stays at libinput default"
+    fi
+
     # Report what VA-API actually reports, rather than assuming the package fixed it.
     if command -v vainfo &>/dev/null; then
         local profiles
@@ -119,5 +148,6 @@ verify_tuning() {
 
 apply_sysctl
 install_vaapi
+install_touchpad_quirk
 assert_fstrim
 verify_tuning

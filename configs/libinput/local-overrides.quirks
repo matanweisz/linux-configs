@@ -1,0 +1,50 @@
+# =============================================================================
+# libinput local overrides — installed to /etc/libinput/local-overrides.quirks
+# by install/system-tuning.sh
+#
+# PROBLEM
+# Two-finger scrolling on the ASUS ROG Zephyrus M16 (GU603) touchpad is far too
+# fast. It is trackpad-only: an external mouse scrolls normally, because a wheel
+# emits discrete notches while a touchpad emits distance-based events.
+#
+# WHY THERE IS NO SETTING FOR THIS
+# GNOME has no scroll-speed key. Every 'scroll' key in every installed schema is
+# a direction or enable toggle (natural-scroll, two-finger-scrolling-enabled,
+# edge-scrolling-enabled, overlay-scrolling). `touchpad speed` is POINTER
+# acceleration and does not affect scrolling at all. libinput likewise ships no
+# scroll-factor quirk — AttrTrackpointMultiplier is trackpoint-only.
+#
+# HOW THIS WORKS
+# libinput converts finger travel from device units to millimetres, and scroll
+# distance is defined in mm:
+#
+#     resolution (units/mm) = (abs_max - abs_min) / size_mm
+#
+# AttrSizeHint declares the pad's physical size. Declaring the pad SMALLER than
+# it is raises the computed resolution, so the same finger travel maps to fewer
+# millimetres, and scrolling slows proportionally. The pad really is 128x83mm
+# (udev: ID_INPUT_WIDTH_MM=128, ID_INPUT_HEIGHT_MM=83), so 64x42 is half size,
+# which halves scroll distance.
+#
+# TUNING: this is the dial. Larger = faster, smaller = slower.
+#     96x62  -> 0.75x  (gentle)
+#     64x42  -> 0.50x  (current)
+#     43x28  -> 0.33x  (aggressive)
+#
+# SIDE EFFECTS — read before tuning further
+#   * Pointer motion scales too, by the same factor. Compensate with
+#     `gsettings set org.gnome.desktop.peripherals.touchpad speed <0.0-1.0>`,
+#     which affects the pointer only and leaves scrolling alone.
+#   * Palm/thumb rejection thresholds are partly mm-based, so a very small
+#     declared size can degrade palm rejection. Do not go below ~0.33x.
+#
+# REVERT: delete /etc/libinput/local-overrides.quirks and log out/in.
+# VERIFY: sudo libinput list-devices | grep -A4 -i touchpad   ("Size:" line)
+# =============================================================================
+
+[ASUS ROG Zephyrus M16 Touchpad scroll damping]
+MatchBus=i2c
+MatchVendor=0x04F3
+MatchProduct=0x319F
+MatchUdevType=touchpad
+AttrSizeHint=64x42

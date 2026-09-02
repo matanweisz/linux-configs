@@ -111,6 +111,7 @@ linux-configs/
 ├── ghostty/config            # terminal config
 ├── nvim/init.lua             # editor config (in sync with mac/nvim/init.lua)
 ├── gnome/extensions.dconf    # GNOME Shell extension settings (source of truth)
+├── configs/libinput/         # touchpad scroll-damping quirk (-> /etc/libinput/)
 ├── configs/                  # shared: starship.toml, .gitconfig, .gitignore_global, btop/
 ├── claude/                   # Ubuntu Claude Code config (no skills/ — see mac/claude/skills)
 ├── github/                   # SSH setup guide
