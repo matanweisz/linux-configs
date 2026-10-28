@@ -1,0 +1,16 @@
+# topgrade — run as `up` (alias in zsh/.zsh_aliases). Docs: https://github.com/topgrade-rs/topgrade
+# Steps for tools that aren't installed are skipped automatically; only
+# disable the ones that are installed but must not be touched here.
+[misc]
+disable = [
+    "containers", # would `docker pull ubuntu:latest` etc. — images are pinned per project
+    "gcloud",     # gcloud comes from apt; `components update` refuses on apt installs
+    "uv",         # uv comes from brew; `uv self update` fights the formula
+    "node",       # global npm on brew's node is brew-managed
+    "brew_cask",  # no casks on Linux
+    "vagrant",
+]
+cleanup = true
+
+[brew]
+autoremove = true

@@ -64,7 +64,7 @@ alias glog='git log --oneline --graph --all --decorate'
 alias t='terraform'
 alias ti='terraform init'
 alias tp='terraform plan'
-alias ta='terraform apply -auto-approve'
+alias ta='terraform apply'
 alias td='terraform destroy'
 alias tg='terragrunt'
 
@@ -162,7 +162,7 @@ ec2ssh() {
     [[ "$os" == *"ubuntu"* ]] && user="ubuntu"
     [[ "$ip" == "None" || -z "$ip" ]] && { echo "No public IP found."; return 1; }
     echo "Connecting to $ip as $user..."
-    ssh -i ~/ssh_keys/"${key}.pem" -o StrictHostKeyChecking=no "$user@$ip"
+    ssh -i ~/ssh_keys/"${key}.pem" -o StrictHostKeyChecking=accept-new "$user@$ip"
 }
 
 # ---- Docker ----
@@ -176,6 +176,7 @@ alias ps='procs'
 alias htop='btm'
 alias http='xh'
 alias help='tldr'
+alias up='topgrade'
 
 # ---- Kubectl with color (only if kubecolor installed) ----
 command -v kubecolor &>/dev/null && alias kubectl='kubecolor'

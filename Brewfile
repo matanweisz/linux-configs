@@ -58,9 +58,9 @@ brew "dive"               # inspect image layers
 brew "trivy"              # vulnerability scanner
 
 # ---- Languages ----
-brew "go"
-brew "python@3.12"
-brew "node"
+# Runtimes come from mise (~/.config/mise/config.toml: node lts, python 3.12, go);
+# brew still pulls node/python in as dependencies of other formulae.
+brew "mise"               # polyglot runtime manager; per-project .mise.toml pins
 
 # ---- Editor ----
 brew "neovim"
@@ -85,6 +85,12 @@ brew "tree-sitter-cli"    # required by nvim-treesitter main branch to compile p
 brew "shellcheck"         # shell script linter
 brew "uv"                 # fast Python package/tool manager
 brew "pre-commit"         # git hook framework (README: `pre-commit install`)
+brew "topgrade"           # `up` alias: apt + brew + snap + zinit + nvim + krew in one go
+brew "hyperfine"          # benchmark (e.g. zsh startup)
+
+# ---- AI agents ----
+brew "codex"              # OpenAI Codex CLI
+brew "gemini-cli"         # Google Gemini CLI
 
 # ---- Kubernetes power-user ----
 brew "kubescape"          # K8s security scanner (NSA/CIS/MITRE)
