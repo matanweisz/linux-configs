@@ -82,6 +82,13 @@ Then, by hand:
 | CLI tools | Homebrew (`Brewfile`) | Homebrew (`mac/Brewfile`) |
 | GUI apps | apt / deb / snap (`install/desktop-apps.sh`) | Homebrew casks |
 | Native daemons | apt — Docker Engine, gcloud SDK (`install/devops-tools.sh`) | casks / option 10 |
+| Language runtimes | mise (`configs/mise/config.toml`; per-project `.mise.toml`) | Homebrew |
+
+**Staying current (Ubuntu):** `up` (= `topgrade`, `configs/topgrade/topgrade.toml`) runs apt,
+snap, brew, mise, zinit, nvim, krew, helm, gh, and Claude Code updates in one go. A weekly
+systemd user timer (`topgrade-reminder.timer`, Mon 10:00) only *reminds*, because apt needs
+sudo. `unattended-upgrades` covers Ubuntu security only, so third-party apt repos (Chrome,
+Docker, gcloud, VS Code) drift without `up`.
 
 CLI tool names and versions are identical across both Brewfiles on purpose.
 
@@ -297,6 +304,7 @@ sessions to sign out of. Nothing there is reversible after a wipe.
 | `cat` | bat | | `kco` | switch kubectl context |
 | `lg`/`lzd` | lazygit / lazydocker | | `awsuser` | switch AWS profile |
 | `vim` | nvim | | `ec2ls`/`ec2ssh` | list / SSH EC2 by ID |
-| `t`/`tp`/`ta` | terraform / plan / apply | | `rm`/`unrm` | safe-trash / restore |
+| `t`/`tp`/`ta` | terraform / plan / apply (prompts) | | `rm`/`unrm` | safe-trash / restore |
+| `up` | topgrade (update everything) | | | |
 
 Full reference: `mac/README.md`.

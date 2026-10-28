@@ -67,6 +67,19 @@ copy_cfg "$REPO_DIR/configs/gh/config.yml"     "$HOME/.config/gh/config.yml"
 copy_cfg "$REPO_DIR/configs/atuin/config.toml" "$HOME/.config/atuin/config.toml"
 copy_cfg "$REPO_DIR/configs/tmux/tmux.conf"    "$HOME/.config/tmux/tmux.conf"
 
+# ---- topgrade (`up`) + weekly reminder timer ----
+copy_cfg "$REPO_DIR/configs/topgrade/topgrade.toml" "$HOME/.config/topgrade.toml"
+for u in topgrade-reminder.service topgrade-reminder.timer; do
+    mkdir -p "$HOME/.config/systemd/user"
+    cp "$REPO_DIR/configs/systemd/$u" "$HOME/.config/systemd/user/$u"
+done
+systemctl --user daemon-reload 2>/dev/null && systemctl --user enable --now topgrade-reminder.timer 2>/dev/null \
+    && log_success "Enabled topgrade-reminder.timer" || log_warn "Could not enable topgrade-reminder.timer (no user systemd?)"
+
+# ---- mise global runtimes (node lts / python 3.12 / go) ----
+copy_cfg "$REPO_DIR/configs/mise/config.toml" "$HOME/.config/mise/config.toml"
+command -v mise &>/dev/null && mise install && log_success "mise runtimes installed"
+
 # ---- btop ----
 if [[ -f "$REPO_DIR/configs/btop/btop.conf" ]]; then
     mkdir -p "$HOME/.config/btop/themes"

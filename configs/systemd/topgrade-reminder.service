@@ -1,0 +1,6 @@
+[Unit]
+Description=Remind to run topgrade (needs sudo, so it is never run unattended)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/notify-send -a topgrade -i software-update-available "Weekly update" "Open a terminal and run: up"

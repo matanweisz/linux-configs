@@ -71,8 +71,9 @@ setopt hist_ignore_space hist_ignore_all_dups hist_save_no_dups
 command -v starship &>/dev/null && eval "$(starship init zsh)"
 command -v zoxide &>/dev/null && eval "$(zoxide init --cmd cd zsh)"
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
-command -v atuin &>/dev/null && eval "$(atuin init zsh)"
+# fzf before atuin: atuin owns Ctrl+R, fzf keeps Ctrl+T / Alt+C; Up stays with history-substring-search
 command -v fzf &>/dev/null && source <(fzf --zsh)
+command -v atuin &>/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
 
 # ---- FZF Config ----
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
@@ -85,6 +86,8 @@ source ~/.zsh_aliases
 # ---- PATH ----
 export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+# mise shims (not `mise activate`: same per-dir .mise.toml resolution, ~35ms less startup)
+export PATH="$HOME/.local/share/mise/shims:$PATH"
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
 
